@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Add Expense · Student Expense Tracker</title>
+<meta name="theme-color" content="#171e19" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          charcoal: '#171e19',
+          crimson: '#ca0013',
+          sage: '#b7c6c2',
+          offwhite: '#eeebe3',
+        },
+        fontFamily: { sans: ['Nunito', 'sans-serif'] },
+        borderRadius: { '4xl': '2.5rem' },
+        boxShadow: {
+          soft: '0 20px 50px -12px rgba(0,0,0,0.08)',
+          redglow: '0 10px 30px -5px rgba(202,0,19,0.35)',
+        },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-offwhite text-charcoal font-sans" data-page="add">
+
+<div class="page-shell max-w-md mx-auto px-5">
+
+  <header class="flex items-center justify-between pt-14 pb-6">
+    <div>
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Log a spend</p>
+      <h1 class="text-[30px] font-black leading-tight">Add Expense</h1>
+    </div>
+    <a href="index.html" class="w-11 h-11 rounded-full bg-white border border-sage-soft shadow-soft flex items-center justify-center text-lg">✕</a>
+  </header>
+
+  <!-- Category Horizontal Scroll Selector -->
+  <section class="mb-6">
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-3">Category</p>
+    <div id="category-row" class="snap-row scrollbar-hide">
+      <!-- injected by add.js -->
+    </div>
+  </section>
+
+  <!-- Amount Card -->
+  <section class="bg-white rounded-4xl shadow-soft p-6 mb-6 relative overflow-hidden">
+    <div class="decor-blob"></div>
+    <div class="relative z-10">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount</p>
+      <div class="flex items-center gap-2 mb-5">
+        <span class="text-[32px] font-black text-crimson">₹</span>
+        <input id="amount-input" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"
+          class="text-[32px] font-black bg-transparent outline-none w-full placeholder:text-sage" />
+      </div>
+
+      <!-- Need vs Want toggle -->
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Was this a...</p>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <button data-expense-type="need" class="expense-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">🧠 Need</button>
+        <button data-expense-type="want" class="expense-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">✨ Want</button>
+      </div>
+
+      <!-- Note -->
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Note (optional)</p>
+      <input id="note-input" type="text" placeholder="e.g. Canteen lunch with friends"
+        class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage" />
+    </div>
+  </section>
+
+  <!-- Payment method actions -->
+  <section class="flex flex-col gap-3">
+    <button id="pay-cash-btn" class="w-full py-4 rounded-3xl bg-white border border-sage-soft font-black text-[15px] flex items-center justify-center gap-2">
+      💵 Paid with Cash
+    </button>
+    <button id="pay-qr-btn" class="w-full py-4 rounded-3xl bg-crimson text-white font-black text-[15px] shadow-redglow flex items-center justify-center gap-2">
+      📷 Scan QR / Pay Online
+    </button>
+  </section>
+
+  <p id="form-error" class="hidden text-center text-[12px] font-bold text-crimson mt-4"></p>
+
+</div>
+
+<!-- QR Scan Simulation Modal -->
+<div id="scan-modal" class="hidden">
+  <div class="sheet-overlay">
+    <div class="sheet-panel text-center">
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-6"></div>
+      <div id="scan-scanning" class="flex flex-col items-center gap-4 py-4">
+        <div class="w-20 h-20 rounded-3xl bg-charcoal flex items-center justify-center text-3xl">📷</div>
+        <div class="spinner"></div>
+        <p class="font-black text-[16px]">Scanning QR code…</p>
+        <p class="text-[12px] font-bold text-sage">Opening UPI app to complete payment</p>
+      </div>
+      <div id="scan-success" class="hidden flex flex-col items-center gap-3 py-4">
+        <div class="w-20 h-20 rounded-3xl bg-crimson/10 flex items-center justify-center text-3xl">✅</div>
+        <p class="font-black text-[16px]">Scan simulated!</p>
+        <p class="text-[13px] font-bold text-sage px-4">
+          We'll mark this as <b class="text-charcoal">Pending</b> in your Online wallet until you confirm success from the dashboard.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+
+<script type="module" src="js/add.js"></script>
+</body>
+</html>

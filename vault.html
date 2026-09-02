@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Vault · Student Expense Tracker</title>
+<meta name="theme-color" content="#171e19" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          charcoal: '#171e19',
+          crimson: '#ca0013',
+          sage: '#b7c6c2',
+          offwhite: '#eeebe3',
+        },
+        fontFamily: { sans: ['Nunito', 'sans-serif'] },
+        borderRadius: { '4xl': '2.5rem' },
+        boxShadow: {
+          soft: '0 20px 50px -12px rgba(0,0,0,0.08)',
+          redglow: '0 10px 30px -5px rgba(202,0,19,0.35)',
+        },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-offwhite text-charcoal font-sans" data-page="vault">
+
+<div class="page-shell max-w-md mx-auto px-5">
+
+  <header class="flex items-center justify-between pt-14 pb-6">
+    <div>
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Discipline</p>
+      <h1 class="text-[30px] font-black leading-tight">Savings Vault</h1>
+    </div>
+    <button id="new-goal-btn" class="w-11 h-11 rounded-full bg-crimson text-white shadow-redglow flex items-center justify-center text-xl font-black">+</button>
+  </header>
+
+  <!-- Total Locked hero -->
+  <section class="relative overflow-hidden bg-charcoal text-white rounded-4xl shadow-soft p-6 mb-6">
+    <div class="decor-blob" style="background: rgba(183,198,194,0.15);"></div>
+    <div class="relative z-10">
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage mb-1">Total locked away</p>
+      <p class="text-[32px] font-black leading-none" id="total-locked">₹0</p>
+      <p class="text-[13px] font-semibold text-sage mt-2">Money here won't show up in "Available to Spend" — that's the point 🔒</p>
+    </div>
+  </section>
+
+  <!-- Goals list -->
+  <section id="goals-list" class="flex flex-col gap-4"></section>
+
+  <div id="goals-empty" class="hidden text-center py-12">
+    <p class="text-4xl mb-2">🎯</p>
+    <p class="text-[16px] font-black mb-1">No goals yet</p>
+    <p class="text-[13px] font-bold text-sage">Tap + to lock away money for something big.</p>
+  </div>
+
+</div>
+
+<!-- New Goal Sheet -->
+<div id="new-goal-modal" class="hidden">
+  <div class="sheet-overlay">
+    <div class="sheet-panel">
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
+      <h3 class="text-[20px] font-black mb-4">New Savings Goal</h3>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Goal title</p>
+      <input id="goal-title" type="text" placeholder="e.g. New Laptop"
+        class="w-full bg-white border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage mb-4" />
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Target amount</p>
+      <div class="flex items-center gap-2 mb-4 bg-white border border-sage-soft rounded-2xl px-4 py-3">
+        <span class="text-[18px] font-black text-crimson">₹</span>
+        <input id="goal-target" type="number" min="0" step="1" placeholder="0"
+          class="text-[18px] font-black bg-transparent outline-none w-full placeholder:text-sage" />
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Deadline (optional)</p>
+      <input id="goal-deadline" type="date"
+        class="w-full bg-white border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-5" />
+
+      <div class="flex gap-3">
+        <button id="goal-cancel-btn" class="flex-1 py-4 rounded-2xl bg-white border border-sage-soft font-black text-[14px]">Cancel</button>
+        <button id="goal-save-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Create Goal</button>
+      </div>
+      <p id="goal-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Contribute / Withdraw Sheet -->
+<div id="fund-modal" class="hidden">
+  <div class="sheet-overlay">
+    <div class="sheet-panel">
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
+      <h3 class="text-[20px] font-black mb-1" id="fund-modal-title">Add Funds</h3>
+      <p class="text-[13px] font-bold text-sage mb-4" id="fund-modal-goal">Goal name</p>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount</p>
+      <div class="flex items-center gap-2 mb-4 bg-white border border-sage-soft rounded-2xl px-4 py-3">
+        <span class="text-[18px] font-black text-crimson">₹</span>
+        <input id="fund-amount" type="number" min="0" step="1" placeholder="0"
+          class="text-[18px] font-black bg-transparent outline-none w-full placeholder:text-sage" />
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Wallet</p>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <button data-fund-wallet="cash" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💵 Cash</button>
+        <button data-fund-wallet="online" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💳 Online</button>
+      </div>
+
+      <div class="flex gap-3">
+        <button id="fund-cancel-btn" class="flex-1 py-4 rounded-2xl bg-white border border-sage-soft font-black text-[14px]">Cancel</button>
+        <button id="fund-save-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Confirm</button>
+      </div>
+      <p id="fund-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+
+<script type="module" src="js/vault.js"></script>
+</body>
+</html>
