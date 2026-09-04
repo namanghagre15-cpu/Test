@@ -1,7 +1,27 @@
 /* ============================================================
    nav.js — Shared floating bottom navigation bar
-   Renders into a <div id="bottom-nav"></div> present on every page.
+   Also acts as the shared "app bootstrap" imported by every
+   page: registers the service worker, runs the app-lock gate,
+   and posts any due recurring expenses.
    ============================================================ */
+import { initAppLock } from './lock.js';
+import { runDueRecurring } from './db.js';
+import './theme.js';
+
+// Register the service worker once, from whichever page loads first.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((err) => {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
+
+// Gate the page behind PIN/biometric lock if the user has one set up.
+initAppLock();
+
+// Silently post any recurring expenses that came due since last visit.
+runDueRecurring().catch((err) => console.warn('Recurring engine error:', err));
 
 const ICONS = {
   home: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg>`,
@@ -18,15 +38,6 @@ const NAV_ITEMS = [
   { id: 'stats', href: 'stats.html', icon: 'chart', label: 'Stats' },
   { id: 'vault', href: 'vault.html', icon: 'lock', label: 'Vault' },
 ];
-
-// Register the service worker once, from whichever page loads first.
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((err) => {
-      console.warn('Service worker registration failed:', err);
-    });
-  });
-}
 
 export function renderNav(activePage) {
   const container = document.getElementById('bottom-nav');

@@ -1,20 +1,35 @@
 /* ============================================================
-   add.js — Manual Entry & QR Scan Simulation (add.html)
+   add.js — Manual Entry (numpad) + REAL QR Scan & UPI Pay (add.html)
+   The QR step uses the real browser camera (getUserMedia) and a
+   real QR decoder (jsQR) — no timers pretending to "scan". The
+   UPI payment itself is a real `upi://` deep link handed to the
+   OS, which is exactly how every UPI app integration works from
+   a web page (there is no way for a website to fake a successful
+   bank transfer — only the UPI app + user's bank can do that,
+   which is why we still mark it "Pending" until the user confirms).
    ============================================================ */
 import { renderNav } from './nav.js';
-import { addExpense, categoryIcon } from './db.js';
+import {
+  addExpense,
+  categoryIcon,
+  CATEGORIES,
+  suggestCategoryByTime,
+  recallWalletForCategory,
+} from './db.js';
 
 renderNav('add');
 
-const CATEGORIES = ['Food', 'Travel', 'Books', 'Fun', 'Bills', 'Other'];
-
-let selectedCategory = CATEGORIES[0];
+let selectedCategory = suggestCategoryByTime();
 let selectedExpenseType = 'need';
+let selectedWalletType = recallWalletForCategory(selectedCategory) || 'cash';
+let amountStr = '0';
 
 const categoryRow = document.getElementById('category-row');
-const amountInput = document.getElementById('amount-input');
+const amountDisplay = document.getElementById('amount-display');
 const noteInput = document.getElementById('note-input');
 const formError = document.getElementById('form-error');
+
+/* ---------------- Category selector ---------------- */
 
 function renderCategories() {
   categoryRow.innerHTML = '';
@@ -28,6 +43,11 @@ function renderCategories() {
       : `<span>${categoryIcon(cat)}</span>`;
     el.addEventListener('click', () => {
       selectedCategory = cat;
+      const remembered = recallWalletForCategory(cat);
+      if (remembered) {
+        selectedWalletType = remembered;
+        renderWalletTypeButtons();
+      }
       renderCategories();
     });
     categoryRow.appendChild(el);
@@ -36,15 +56,13 @@ function renderCategories() {
 
 function renderExpenseTypeButtons() {
   document.querySelectorAll('.expense-type-btn').forEach((btn) => {
-    const type = btn.dataset.expenseType;
-    const active = type === selectedExpenseType;
+    const active = btn.dataset.expenseType === selectedExpenseType;
     btn.classList.toggle('bg-charcoal', active);
     btn.classList.toggle('text-white', active);
-    btn.classList.toggle('bg-white', !active);
-    btn.classList.toggle('text-charcoal', !active);
+    btn.classList.toggle('bg-card', !active);
+    btn.classList.toggle('text-ink', !active);
   });
 }
-
 document.querySelectorAll('.expense-type-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     selectedExpenseType = btn.dataset.expenseType;
@@ -52,11 +70,50 @@ document.querySelectorAll('.expense-type-btn').forEach((btn) => {
   });
 });
 
+function renderWalletTypeButtons() {
+  document.querySelectorAll('.wallet-type-btn').forEach((btn) => {
+    const active = btn.dataset.walletType === selectedWalletType;
+    btn.classList.toggle('bg-charcoal', active);
+    btn.classList.toggle('text-white', active);
+    btn.classList.toggle('bg-card', !active);
+    btn.classList.toggle('text-ink', !active);
+  });
+}
+document.querySelectorAll('.wallet-type-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    selectedWalletType = btn.dataset.walletType;
+    renderWalletTypeButtons();
+  });
+});
+
 renderCategories();
 renderExpenseTypeButtons();
+renderWalletTypeButtons();
+
+/* ---------------- Numpad ---------------- */
+
+function renderAmount() {
+  amountDisplay.textContent = amountStr;
+}
+
+document.querySelectorAll('.numpad-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.key;
+    formError.classList.add('hidden');
+    if (key === 'back') {
+      amountStr = amountStr.length > 1 ? amountStr.slice(0, -1) : '0';
+    } else if (key === '.') {
+      if (!amountStr.includes('.')) amountStr += '.';
+    } else {
+      if (amountStr === '0') amountStr = key;
+      else if (amountStr.length < 9) amountStr += key;
+    }
+    renderAmount();
+  });
+});
 
 function readAmount() {
-  const val = parseFloat(amountInput.value);
+  const val = parseFloat(amountStr);
   if (!val || val <= 0) {
     formError.textContent = 'Please enter a valid amount greater than 0.';
     formError.classList.remove('hidden');
@@ -66,15 +123,16 @@ function readAmount() {
   return Math.round(val * 100) / 100;
 }
 
-/* ---------------- Pay with Cash: instant, non-pending ---------------- */
-document.getElementById('pay-cash-btn').addEventListener('click', async () => {
+/* ---------------- Save (instant, non-pending) ---------------- */
+
+document.getElementById('save-btn').addEventListener('click', async () => {
   const amount = readAmount();
   if (amount === null) return;
 
   await addExpense({
     amount,
     category: selectedCategory,
-    walletType: 'cash',
+    walletType: selectedWalletType,
     expenseType: selectedExpenseType,
     note: noteInput.value.trim(),
     isPending: false,
@@ -83,33 +141,199 @@ document.getElementById('pay-cash-btn').addEventListener('click', async () => {
   window.location.href = 'index.html';
 });
 
-/* ---------------- Scan QR / Pay Online: simulated, marked pending ---------------- */
-document.getElementById('pay-qr-btn').addEventListener('click', async () => {
-  const amount = readAmount();
-  if (amount === null) return;
+/* ---------------- SMS Clipboard Quick-Detect (real Clipboard API) ---------------- */
 
-  const modal = document.getElementById('scan-modal');
-  const scanningEl = document.getElementById('scan-scanning');
-  const successEl = document.getElementById('scan-success');
-  scanningEl.classList.remove('hidden');
-  successEl.classList.add('hidden');
-  modal.classList.remove('hidden');
+document.getElementById('clipboard-detect-btn').addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) {
+      formError.textContent = 'Clipboard is empty.';
+      formError.classList.remove('hidden');
+      return;
+    }
+    const match = text.match(/(?:rs\.?|inr|₹)\s?([\d,]+(?:\.\d{1,2})?)/i);
+    if (!match) {
+      formError.textContent = "Couldn't find an amount in your clipboard text.";
+      formError.classList.remove('hidden');
+      return;
+    }
+    const amount = parseFloat(match[1].replace(/,/g, ''));
+    if (window.confirm(`₹${amount} debit detected. Fill this amount?`)) {
+      amountStr = String(amount);
+      renderAmount();
+    }
+  } catch (err) {
+    formError.textContent = 'Clipboard access was denied or is unavailable in this browser.';
+    formError.classList.remove('hidden');
+  }
+});
 
+/* ================================================================
+   REAL QR Scanner + UPI Deep Link
+   ================================================================ */
+
+const scanModal = document.getElementById('scan-modal');
+const cameraView = document.getElementById('scan-camera-view');
+const manualView = document.getElementById('scan-manual-view');
+const confirmView = document.getElementById('scan-confirm-view');
+const pendingView = document.getElementById('scan-pending-view');
+const qrStatus = document.getElementById('qr-status');
+const video = document.getElementById('qr-video');
+const canvas = document.getElementById('qr-canvas');
+const canvasCtx = canvas.getContext('2d', { willReadFrequently: true });
+
+let mediaStream = null;
+let scanRAF = null;
+let decodedPayee = { pa: '', pn: '', am: '' };
+
+function showView(view) {
+  [cameraView, manualView, confirmView, pendingView].forEach((v) => v.classList.add('hidden'));
+  view.classList.remove('hidden');
+}
+
+async function startCamera() {
+  showView(cameraView);
+  qrStatus.textContent = 'Starting camera…';
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false,
+    });
+    video.srcObject = mediaStream;
+    await video.play();
+    qrStatus.textContent = 'Scanning…';
+    scanLoop();
+  } catch (err) {
+    qrStatus.textContent = 'Camera access denied or unavailable. You can enter the UPI ID manually instead.';
+  }
+}
+
+function stopCamera() {
+  if (scanRAF) cancelAnimationFrame(scanRAF);
+  scanRAF = null;
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((t) => t.stop());
+    mediaStream = null;
+  }
+}
+
+function scanLoop() {
+  if (!mediaStream) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = window.jsQR ? window.jsQR(imageData.data, imageData.width, imageData.height) : null;
+    if (code && code.data) {
+      handleDecodedText(code.data);
+      return; // stop looping — handleDecodedText takes over
+    }
+  }
+  scanRAF = requestAnimationFrame(scanLoop);
+}
+
+function parseUpiUri(text) {
+  // Real UPI Intent URI format: upi://pay?pa=<vpa>&pn=<name>&am=<amount>&cu=INR&tn=<note>
+  if (!/^upi:\/\/pay/i.test(text)) return null;
+  const queryStr = text.split('?')[1] || '';
+  const params = new URLSearchParams(queryStr);
+  return {
+    pa: params.get('pa') || '',
+    pn: params.get('pn') || '',
+    am: params.get('am') || '',
+    tn: params.get('tn') || '',
+  };
+}
+
+function handleDecodedText(text) {
+  const parsed = parseUpiUri(text);
+  if (!parsed || !parsed.pa) {
+    qrStatus.textContent = 'That QR is not a UPI payment code. Point at a valid UPI QR to try again.';
+    // Keep scanning — a mis-read or unrelated QR shouldn't dead-end the flow
+    scanRAF = requestAnimationFrame(scanLoop);
+    return;
+  }
+  decodedPayee = parsed;
+  stopCamera();
+  openConfirmView();
+}
+
+function openConfirmView() {
+  document.getElementById('qr-payee-line').textContent = `Paying ${decodedPayee.pn || decodedPayee.pa} (${decodedPayee.pa})`;
+  const amountField = document.getElementById('qr-confirm-amount');
+  amountField.value = decodedPayee.am || (amountStr !== '0' ? amountStr : '');
+  showView(confirmView);
+}
+
+document.getElementById('scan-qr-btn').addEventListener('click', () => {
+  decodedPayee = { pa: '', pn: '', am: '' };
+  scanModal.classList.remove('hidden');
+  startCamera();
+});
+
+document.getElementById('qr-manual-entry-btn').addEventListener('click', () => {
+  stopCamera();
+  showView(manualView);
+});
+
+document.getElementById('manual-upi-continue-btn').addEventListener('click', () => {
+  const upiId = document.getElementById('manual-upi-id').value.trim();
+  if (!upiId || !upiId.includes('@')) {
+    alert('Please enter a valid UPI ID (e.g. name@bank).');
+    return;
+  }
+  decodedPayee = { pa: upiId, pn: upiId.split('@')[0], am: '' };
+  openConfirmView();
+});
+
+document.getElementById('qr-confirm-cancel').addEventListener('click', () => {
+  scanModal.classList.add('hidden');
+  stopCamera();
+});
+
+document.getElementById('scan-close-btn').addEventListener('click', () => {
+  scanModal.classList.add('hidden');
+  stopCamera();
+});
+
+document.getElementById('qr-confirm-pay').addEventListener('click', async () => {
+  const amountField = document.getElementById('qr-confirm-amount');
+  const amount = parseFloat(amountField.value);
+  if (!amount || amount <= 0) {
+    alert('Please enter a valid amount to pay.');
+    return;
+  }
+  const finalAmount = Math.round(amount * 100) / 100;
+
+  // Save locally first as Pending — this is the real Pending UPI Recovery
+  // workflow: we cannot know the bank-transfer result from a web page, so
+  // we mark it pending and let the dashboard reconcile it afterwards.
   await addExpense({
-    amount,
+    amount: finalAmount,
     category: selectedCategory,
     walletType: 'online',
     expenseType: selectedExpenseType,
-    note: noteInput.value.trim(),
+    note: noteInput.value.trim() || `UPI: ${decodedPayee.pn || decodedPayee.pa}`,
     isPending: true,
   });
 
-  // Simulate the QR-scan → UPI-app round trip
+  showView(pendingView);
+
+  // Build a genuine UPI deep link and hand off to the OS / installed UPI apps.
+  const upiUrl = `upi://pay?pa=${encodeURIComponent(decodedPayee.pa)}&pn=${encodeURIComponent(
+    decodedPayee.pn || 'Merchant'
+  )}&am=${finalAmount}&cu=INR&tn=${encodeURIComponent(noteInput.value.trim() || selectedCategory)}`;
+
   setTimeout(() => {
-    scanningEl.classList.add('hidden');
-    successEl.classList.remove('hidden');
-    setTimeout(() => {
-      window.location.href = 'index.html';
-    }, 1400);
-  }, 1500);
+    window.location.href = upiUrl;
+  }, 400);
+
+  setTimeout(() => {
+    window.location.href = 'index.html';
+  }, 2200);
 });
+
+// Make sure the camera is always released if the user navigates away.
+window.addEventListener('beforeunload', stopCamera);
+window.addEventListener('pagehide', stopCamera);
