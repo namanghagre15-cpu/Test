@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Settings · Money follow</title>
+<meta name="theme-color" content="#171e19" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
+<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
+        },
+        fontFamily: { sans: ['Nunito', 'sans-serif'] },
+        borderRadius: { '4xl': '2.5rem' },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)', redglow: '0 10px 30px -5px rgba(202,0,19,0.35)' },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="css/styles.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-surface text-ink font-sans" data-page="settings">
+
+<div class="page-shell max-w-md mx-auto px-5">
+
+  <header class="pt-14 pb-6">
+    <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Configure</p>
+    <h1 class="text-[30px] font-black leading-tight">Settings</h1>
+  </header>
+
+  <!-- Appearance -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4">🎨 Appearance</h2>
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-[13px] font-bold">Dark Mode</p>
+      <button id="dark-mode-switch" class="mf-switch"><span class="knob"></span></button>
+    </div>
+    <div class="flex items-center justify-between">
+      <p class="text-[13px] font-bold">Ghost Mode (blur amounts)</p>
+      <button id="ghost-mode-switch" class="mf-switch"><span class="knob"></span></button>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4">🔒 Security</h2>
+
+    <div id="pin-not-set" class="mb-3">
+      <p class="text-[13px] font-bold text-sage mb-3">No PIN set — app is currently unlocked for anyone.</p>
+      <button id="setup-pin-btn" class="w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px]">Set a 4-digit PIN</button>
+    </div>
+
+    <div id="pin-is-set" class="hidden mb-3">
+      <p class="text-[13px] font-bold text-ink mb-3">✓ PIN lock is enabled.</p>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <button id="change-pin-btn" class="py-3 rounded-2xl border border-sage-soft font-black text-[12px]">Change PIN</button>
+        <button id="remove-pin-btn" class="py-3 rounded-2xl border border-crimson/30 text-crimson font-black text-[12px]">Remove PIN</button>
+      </div>
+      <div class="flex items-center justify-between border-t border-sage-soft/60 pt-3">
+        <div>
+          <p class="text-[13px] font-bold">Biometric Unlock</p>
+          <p class="text-[11px] font-bold text-sage" id="biometric-status">Not registered on this device</p>
+        </div>
+        <button id="register-biometric-btn" class="py-2 px-3 rounded-xl bg-charcoal text-white font-black text-[11px]">Enable</button>
+      </div>
+    </div>
+    <p id="security-error" class="hidden text-[12px] font-bold text-crimson"></p>
+  </section>
+
+  <!-- Budget -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4">🎯 Budget & Alerts</h2>
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Monthly budget</p>
+    <div class="flex items-center gap-2 mb-4 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3">
+      <span class="text-[16px] font-black text-crimson">₹</span>
+      <input id="monthly-budget-input" type="number" min="0" step="1" placeholder="e.g. 8000" class="text-[16px] font-black bg-transparent outline-none w-full text-ink" />
+    </div>
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Low balance alert threshold</p>
+    <div class="flex items-center gap-2 mb-4 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3">
+      <span class="text-[16px] font-black text-crimson">₹</span>
+      <input id="low-balance-input" type="number" min="0" step="1" placeholder="e.g. 100" class="text-[16px] font-black bg-transparent outline-none w-full text-ink" />
+    </div>
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Outside Food weekly limit</p>
+    <div class="flex items-center gap-2 mb-4 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3">
+      <span class="text-[16px] font-black text-crimson">₹</span>
+      <input id="outside-food-input" type="number" min="0" step="1" placeholder="e.g. 500" class="text-[16px] font-black bg-transparent outline-none w-full text-ink" />
+    </div>
+    <div id="mess-alert" class="hidden mb-4 rounded-2xl bg-crimson/10 border border-crimson/30 px-4 py-3">
+      <p class="text-[12px] font-bold text-crimson">⚠️ Warning: Iss hafte bahar ka khana budget cross kar raha hai.</p>
+    </div>
+    <button id="save-budget-btn" class="w-full py-3.5 rounded-2xl bg-crimson text-white font-black text-[13px] shadow-redglow">Save</button>
+  </section>
+
+  <!-- Recurring Expenses -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4">🔁 Recurring Expenses</h2>
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Title</p>
+    <input id="recurring-title" type="text" placeholder="e.g. Netflix subscription" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-3 text-ink" />
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div class="flex items-center gap-1 bg-sage/10 border border-sage-soft rounded-2xl px-3 py-2.5">
+        <span class="text-[14px] font-black text-crimson">₹</span>
+        <input id="recurring-amount" type="number" min="0" step="1" placeholder="0" class="text-[14px] font-black bg-transparent outline-none w-full text-ink" />
+      </div>
+      <select id="recurring-frequency" class="bg-sage/10 border border-sage-soft rounded-2xl px-3 py-2.5 text-[13px] font-bold text-ink">
+        <option value="monthly">Monthly</option>
+        <option value="weekly">Weekly</option>
+      </select>
+    </div>
+    <select id="recurring-category" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-3 text-ink"></select>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <button data-recurring-wallet="cash" class="recurring-wallet-btn py-2.5 rounded-2xl border border-sage-soft font-black text-[12px]">💵 Cash</button>
+      <button data-recurring-wallet="online" class="recurring-wallet-btn py-2.5 rounded-2xl border border-sage-soft font-black text-[12px]">💳 Online</button>
+    </div>
+    <button id="add-recurring-btn" class="w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px] mb-4">+ Add Recurring Expense</button>
+    <div id="recurring-list" class="flex flex-col gap-2"></div>
+  </section>
+
+  <!-- Backup -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4">💾 Backup & Restore</h2>
+    <p class="text-[12px] font-bold text-sage mb-4">Your data lives only on this device. Export a backup before switching phones.</p>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <button id="export-json-btn" class="py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px]">⬇️ Export JSON</button>
+      <label class="py-3.5 rounded-2xl border border-sage-soft font-black text-[13px] text-center cursor-pointer">
+        ⬆️ Import JSON
+        <input id="import-json-input" type="file" accept="application/json" class="hidden" />
+      </label>
+    </div>
+    <p id="backup-status" class="hidden text-[12px] font-bold text-crimson"></p>
+  </section>
+
+  <!-- Parents Export -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4">👨‍👩‍👧 Parents Summary Export</h2>
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-[13px] font-bold">Exclude Wants / Impulse spends</p>
+      <button id="smart-export-switch" class="mf-switch on"><span class="knob"></span></button>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <button id="export-pdf-btn" class="py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px]">📄 Export PDF</button>
+      <button id="export-excel-btn" class="py-3.5 rounded-2xl border border-sage-soft font-black text-[13px]">📊 Export Excel</button>
+    </div>
+  </section>
+
+  <!-- Semester Archive -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4">📦 Semester Archive</h2>
+    <p class="text-[12px] font-bold text-sage mb-4">Snapshot & clear your transaction log at the end of a semester. Wallet and Vault balances are untouched.</p>
+    <input id="archive-label" type="text" placeholder="e.g. Semester 1, 2026" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-3 text-ink" />
+    <button id="create-archive-btn" class="w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px] mb-4">Archive Current Semester</button>
+    <div id="archive-list" class="flex flex-col gap-2"></div>
+  </section>
+
+  <!-- Danger Zone -->
+  <section class="bg-card rounded-4xl border border-crimson/30 p-6 mb-8">
+    <h2 class="text-[16px] font-black mb-2 text-crimson">⚠️ Danger Zone</h2>
+    <p class="text-[12px] font-bold text-sage mb-4">Permanently erase all transactions, wallets, and goals from this device.</p>
+    <button id="wipe-data-btn" class="w-full py-3.5 rounded-2xl bg-crimson text-white font-black text-[13px]">Erase All Data</button>
+  </section>
+
+</div>
+
+<!-- PIN Setup Sheet -->
+<div id="pin-modal" class="hidden">
+  <div class="sheet-overlay">
+    <div class="sheet-panel text-center">
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
+      <h3 class="text-[18px] font-black mb-1" id="pin-modal-title">Set a 4-digit PIN</h3>
+      <p class="text-[12px] font-bold text-sage mb-5" id="pin-modal-sub">Enter a new PIN</p>
+      <div id="pin-modal-dots" class="flex gap-3 justify-center mb-6">
+        <span class="lock-dot"></span><span class="lock-dot"></span><span class="lock-dot"></span><span class="lock-dot"></span>
+      </div>
+      <div class="numpad-grid mb-2">
+        <button data-pmnum="1" class="numpad-btn">1</button>
+        <button data-pmnum="2" class="numpad-btn">2</button>
+        <button data-pmnum="3" class="numpad-btn">3</button>
+        <button data-pmnum="4" class="numpad-btn">4</button>
+        <button data-pmnum="5" class="numpad-btn">5</button>
+        <button data-pmnum="6" class="numpad-btn">6</button>
+        <button data-pmnum="7" class="numpad-btn">7</button>
+        <button data-pmnum="8" class="numpad-btn">8</button>
+        <button data-pmnum="9" class="numpad-btn">9</button>
+        <span></span>
+        <button data-pmnum="0" class="numpad-btn">0</button>
+        <button id="pin-modal-back" class="numpad-btn text-xl">⌫</button>
+      </div>
+      <button id="pin-modal-cancel" class="mt-4 text-[12px] font-black text-sage">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+
+<script type="module" src="js/settings.js"></script>
+</body>
+</html>

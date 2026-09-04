@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Dashboard · Student Expense Tracker</title>
+<title>Dashboard · Money follow</title>
 <meta name="theme-color" content="#171e19" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
@@ -13,17 +13,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
+
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
       extend: {
         colors: {
-          charcoal: '#171e19',
-          crimson: '#ca0013',
-          sage: '#b7c6c2',
-          offwhite: '#eeebe3',
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
         },
         fontFamily: { sans: ['Nunito', 'sans-serif'] },
         borderRadius: { '4xl': '2.5rem' },
@@ -37,7 +43,7 @@
 </script>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body class="bg-offwhite text-charcoal font-sans" data-page="dashboard">
+<body class="bg-surface text-ink font-sans" data-page="dashboard">
 
 <div class="page-shell max-w-md mx-auto px-5">
 
@@ -45,30 +51,40 @@
   <header class="flex items-center justify-between pt-14 pb-6">
     <div>
       <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Good to see you</p>
-      <h1 class="text-[30px] font-black leading-tight text-charcoal" id="greeting-name">Naman</h1>
+      <h1 class="text-[30px] font-black leading-tight text-ink" id="greeting-name">Naman</h1>
     </div>
-    <div class="relative w-12 h-12">
-      <div class="w-12 h-12 rounded-full bg-charcoal border-2 border-white shadow-soft flex items-center justify-center text-lg">
-        🎓
-      </div>
-      <span id="notif-badge" class="hidden absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-crimson border-2 border-offwhite"></span>
+    <div class="flex items-center gap-2">
+      <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-lg" aria-label="Toggle privacy mode">👁️</button>
+      <a href="settings.html" class="relative w-12 h-12 block">
+        <div class="w-12 h-12 rounded-full bg-charcoal border-2 border-white shadow-soft flex items-center justify-center text-lg">
+          🎓
+        </div>
+        <span id="notif-badge" class="hidden absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-crimson border-2 border-surface"></span>
+      </a>
     </div>
   </header>
 
+  <!-- Low balance alert -->
+  <div id="low-balance-alert" class="hidden mb-4 rounded-2xl bg-crimson/10 border border-crimson/30 px-4 py-3 flex items-center gap-3">
+    <span class="text-lg">🚨</span>
+    <p class="text-[13px] font-bold text-crimson leading-snug">Low balance! Available to spend is under your alert threshold.</p>
+  </div>
+
   <!-- Hero Feature Card -->
-  <section class="relative overflow-hidden bg-white rounded-4xl shadow-soft p-6 mb-6">
+  <section class="relative overflow-hidden bg-card rounded-4xl shadow-soft p-6 mb-6">
     <div class="decor-blob"></div>
 
     <div class="relative z-10">
       <div class="flex items-center justify-between mb-5">
-        <div class="w-16 h-16 rounded-2xl bg-white shadow-soft border border-sage-soft flex items-center justify-center text-3xl">
+        <div class="w-16 h-16 rounded-2xl bg-card shadow-soft border border-sage-soft flex items-center justify-center text-3xl">
           💰
         </div>
         <span class="text-[10px] uppercase tracking-widest font-bold text-sage">This month</span>
       </div>
 
       <p class="text-[12px] uppercase tracking-widest font-bold text-sage mb-1">Available to spend</p>
-      <p class="text-[32px] font-black leading-none mb-5" id="available-amount">₹0</p>
+      <p class="text-[32px] font-black leading-none mb-1 mf-amt" id="available-amount">₹0</p>
+      <p class="text-[12px] font-bold text-sage mb-5" id="safe-today-line">Today's safe budget: ₹0</p>
 
       <!-- Bento Metric Cards -->
       <div class="grid grid-cols-2 gap-3 mb-4">
@@ -77,47 +93,89 @@
             <div class="bento-icon">🛡️</div>
             <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Safe Budget</p>
           </div>
-          <p class="text-[14px] font-bold text-charcoal" id="safe-budget">₹0</p>
+          <p class="text-[14px] font-bold text-ink mf-amt" id="safe-budget">₹0</p>
         </div>
         <div class="glass-card rounded-2xl p-3 border border-sage-soft">
           <div class="flex items-center gap-2 mb-2">
             <div class="bento-icon">🔒</div>
             <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Vault Locked</p>
           </div>
-          <p class="text-[14px] font-bold text-charcoal" id="vault-locked">₹0</p>
+          <p class="text-[14px] font-bold text-ink mf-amt" id="vault-locked">₹0</p>
         </div>
+      </div>
+
+      <!-- Monthly budget progress -->
+      <div id="budget-block" class="hidden mb-4">
+        <div class="flex items-center justify-between mb-1.5">
+          <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Monthly budget</p>
+          <p class="text-[11px] font-black" id="budget-label">₹0 / ₹0</p>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="budget-fill" style="width:0%"></div></div>
       </div>
 
       <!-- Alert box -->
       <div class="rounded-2xl bg-sage/20 border border-sage-soft px-4 py-3 flex items-center gap-3">
         <span class="text-lg">💡</span>
-        <p class="text-[13px] font-bold text-charcoal leading-snug" id="alert-text">You're tracking well this week. Keep it up!</p>
+        <p class="text-[13px] font-bold text-ink leading-snug" id="alert-text">You're tracking well this week. Keep it up!</p>
       </div>
+    </div>
+  </section>
+
+  <!-- Financial Health Score + Streak -->
+  <section class="grid grid-cols-2 gap-3 mb-6">
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Health Score</p>
+      <div class="flex items-baseline gap-2">
+        <p class="text-[22px] font-black" id="health-score">--</p>
+        <p class="text-[11px] font-black text-crimson" id="health-label"></p>
+      </div>
+    </div>
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">No-Spend Streak</p>
+      <p class="text-[22px] font-black" id="streak-count">0 <span class="text-[13px]">days 🔥</span></p>
     </div>
   </section>
 
   <!-- Cash vs Online mini row -->
   <section class="grid grid-cols-2 gap-3 mb-6">
-    <div class="bg-white rounded-3xl border border-sage-soft p-4">
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Cash</p>
-      <p class="text-[18px] font-black" id="cash-balance">₹0</p>
+      <p class="text-[18px] font-black mf-amt" id="cash-balance">₹0</p>
     </div>
-    <div class="bg-white rounded-3xl border border-sage-soft p-4">
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Online</p>
-      <p class="text-[18px] font-black" id="online-balance">₹0</p>
+      <p class="text-[18px] font-black mf-amt" id="online-balance">₹0</p>
     </div>
+  </section>
+
+  <!-- Quick Links -->
+  <section class="grid grid-cols-4 gap-2 mb-6">
+    <a href="history.html" class="quick-tile"><span class="text-xl">🧾</span>History</a>
+    <a href="khata.html" class="quick-tile"><span class="text-xl">🤝</span>Khata</a>
+    <a href="vault.html#challenges" class="quick-tile"><span class="text-xl">🏆</span>Challenges</a>
+    <a href="settings.html" class="quick-tile"><span class="text-xl">⚙️</span>Settings</a>
+  </section>
+
+  <!-- Smart Insights -->
+  <section id="insights-section" class="mb-6">
+    <h2 class="text-[16px] font-black mb-2">Smart Insights</h2>
+    <div id="insights-list" class="flex flex-col gap-2"></div>
+  </section>
+
+  <!-- Chillar quick-add -->
+  <section class="mb-6">
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Quick Add (Chillar)</p>
+    <div class="snap-row scrollbar-hide" id="chillar-row"></div>
   </section>
 
   <!-- Secondary Feed -->
   <section>
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-[20px] font-black">Recent Activity</h2>
-      <a href="stats.html" class="text-[12px] font-bold text-crimson">See stats →</a>
+      <a href="history.html" class="text-[12px] font-bold text-crimson">See all →</a>
     </div>
 
-    <div id="feed-list" class="flex flex-col gap-3">
-      <!-- injected by app.js -->
-    </div>
+    <div id="feed-list" class="flex flex-col gap-3"></div>
 
     <div id="feed-empty" class="hidden text-center py-10">
       <p class="text-4xl mb-2">🧾</p>
@@ -135,9 +193,9 @@
       <p class="text-2xl mb-2">📲</p>
       <h3 class="text-[20px] font-black mb-1">Did the payment succeed?</h3>
       <p class="text-[13px] font-bold text-sage mb-1" id="pending-desc">You scanned a QR to pay ₹0 for Food.</p>
-      <p class="text-[13px] font-semibold text-charcoal/70 mb-6">Confirm so we can keep your Online wallet accurate.</p>
+      <p class="text-[13px] font-semibold text-ink/70 mb-6">Confirm so we can keep your Online wallet accurate.</p>
       <div class="flex gap-3">
-        <button id="pending-cancel" class="flex-1 py-4 rounded-2xl bg-white border border-sage-soft font-black text-[14px]">
+        <button id="pending-cancel" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">
           ✕ Failed / Cancel
         </button>
         <button id="pending-confirm" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">

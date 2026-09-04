@@ -3,75 +3,84 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Wallet · Student Expense Tracker</title>
+<title>Wallet · Money follow</title>
 <meta name="theme-color" content="#171e19" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
-
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
       extend: {
         colors: {
-          charcoal: '#171e19',
-          crimson: '#ca0013',
-          sage: '#b7c6c2',
-          offwhite: '#eeebe3',
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
         },
         fontFamily: { sans: ['Nunito', 'sans-serif'] },
         borderRadius: { '4xl': '2.5rem' },
-        boxShadow: {
-          soft: '0 20px 50px -12px rgba(0,0,0,0.08)',
-          redglow: '0 10px 30px -5px rgba(202,0,19,0.35)',
-        },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)', redglow: '0 10px 30px -5px rgba(202,0,19,0.35)' },
       },
     },
   };
 </script>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body class="bg-offwhite text-charcoal font-sans" data-page="wallet">
+<body class="bg-surface text-ink font-sans" data-page="wallet">
 
 <div class="page-shell max-w-md mx-auto px-5">
 
-  <header class="pt-14 pb-6">
-    <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Manage funds</p>
-    <h1 class="text-[30px] font-black leading-tight">Your Wallet</h1>
+  <header class="flex items-center justify-between pt-14 pb-6">
+    <div>
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Manage funds</p>
+      <h1 class="text-[30px] font-black leading-tight">Your Wallet</h1>
+    </div>
+    <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-lg" aria-label="Toggle privacy mode">👁️</button>
   </header>
 
   <!-- Hero: two wallet balances -->
-  <section class="relative overflow-hidden bg-white rounded-4xl shadow-soft p-6 mb-6">
+  <section class="relative overflow-hidden bg-card rounded-4xl shadow-soft p-6 mb-6">
     <div class="decor-blob"></div>
     <div class="relative z-10 grid grid-cols-2 gap-3">
       <div class="glass-card rounded-3xl p-4 border border-sage-soft">
         <div class="bento-icon mb-3">💵</div>
         <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Cash in hand</p>
-        <p class="text-[22px] font-black" id="cash-balance">₹0</p>
+        <p class="text-[22px] font-black mf-amt" id="cash-balance">₹0</p>
       </div>
       <div class="glass-card rounded-3xl p-4 border border-sage-soft">
         <div class="bento-icon mb-3">💳</div>
         <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Online / UPI</p>
-        <p class="text-[22px] font-black" id="online-balance">₹0</p>
+        <p class="text-[22px] font-black mf-amt" id="online-balance">₹0</p>
       </div>
     </div>
   </section>
 
+  <!-- Tabs: Add Money vs Transfer -->
+  <div class="segmented mb-5">
+    <button id="tab-income" class="active">+ Add Pocket Money</button>
+    <button id="tab-transfer">↔ Transfer</button>
+  </div>
+
   <!-- Add Pocket Money / Income Form -->
-  <section class="bg-white rounded-4xl shadow-soft p-6 mb-6">
+  <section id="income-form-section" class="bg-card rounded-4xl shadow-soft p-6 mb-6">
     <h2 class="text-[20px] font-black mb-4">Add Pocket Money</h2>
 
     <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount</p>
     <div class="flex items-center gap-2 mb-5 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3">
       <span class="text-[22px] font-black text-crimson">₹</span>
       <input id="income-amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"
-        class="text-[22px] font-black bg-transparent outline-none w-full placeholder:text-sage" />
+        class="text-[22px] font-black bg-transparent outline-none w-full placeholder:text-sage text-ink" />
     </div>
 
     <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Add to</p>
@@ -82,7 +91,7 @@
 
     <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Source (optional)</p>
     <input id="income-note" type="text" placeholder="e.g. Monthly allowance from parents"
-      class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage mb-5" />
+      class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage mb-5 text-ink" />
 
     <button id="add-income-btn" class="w-full py-4 rounded-3xl bg-crimson text-white font-black text-[15px] shadow-redglow">
       + Add Pocket Money
@@ -90,13 +99,36 @@
     <p id="income-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
   </section>
 
+  <!-- Transfer Form -->
+  <section id="transfer-form-section" class="hidden bg-card rounded-4xl shadow-soft p-6 mb-6">
+    <h2 class="text-[20px] font-black mb-4">Transfer Between Wallets</h2>
+
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount</p>
+    <div class="flex items-center gap-2 mb-5 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3">
+      <span class="text-[22px] font-black text-crimson">₹</span>
+      <input id="transfer-amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"
+        class="text-[22px] font-black bg-transparent outline-none w-full placeholder:text-sage text-ink" />
+    </div>
+
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Direction</p>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <button data-direction="cash-to-online" class="transfer-dir-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">💵 → 💳<br/>Cash to Online</button>
+      <button data-direction="online-to-cash" class="transfer-dir-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">💳 → 💵<br/>Online to Cash</button>
+    </div>
+
+    <button id="do-transfer-btn" class="w-full py-4 rounded-3xl bg-charcoal text-white font-black text-[15px]">
+      ↔ Confirm Transfer
+    </button>
+    <p id="transfer-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
+  </section>
+
   <!-- Income History -->
   <section>
-    <h2 class="text-[20px] font-black mb-3">Income History</h2>
+    <h2 class="text-[20px] font-black mb-3">Wallet History</h2>
     <div id="income-list" class="flex flex-col gap-3"></div>
     <div id="income-empty" class="hidden text-center py-10">
       <p class="text-4xl mb-2">💸</p>
-      <p class="text-[14px] font-bold text-sage">No pocket money added yet.</p>
+      <p class="text-[14px] font-bold text-sage">No pocket money or transfers yet.</p>
     </div>
   </section>
 

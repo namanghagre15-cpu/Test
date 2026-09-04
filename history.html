@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>History · Money follow</title>
+<meta name="theme-color" content="#171e19" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
+<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
+        },
+        fontFamily: { sans: ['Nunito', 'sans-serif'] },
+        borderRadius: { '4xl': '2.5rem' },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)', redglow: '0 10px 30px -5px rgba(202,0,19,0.35)' },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-surface text-ink font-sans" data-page="history">
+
+<div class="page-shell max-w-md mx-auto px-5">
+
+  <header class="flex items-center justify-between pt-14 pb-6">
+    <div>
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Every rupee</p>
+      <h1 class="text-[30px] font-black leading-tight">Transaction History</h1>
+    </div>
+    <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-lg" aria-label="Toggle privacy mode">👁️</button>
+  </header>
+
+  <!-- Search -->
+  <div class="relative mb-3">
+    <input id="search-input" type="text" placeholder="Search note or category…"
+      class="w-full bg-card border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage text-ink" />
+  </div>
+
+  <!-- Filters -->
+  <div class="grid grid-cols-2 gap-2 mb-2">
+    <select id="filter-type" class="bg-card border border-sage-soft rounded-2xl px-3 py-2.5 text-[12px] font-bold text-ink">
+      <option value="">All Types</option>
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+      <option value="transfer">Transfer</option>
+    </select>
+    <select id="filter-wallet" class="bg-card border border-sage-soft rounded-2xl px-3 py-2.5 text-[12px] font-bold text-ink">
+      <option value="">All Wallets</option>
+      <option value="cash">Cash</option>
+      <option value="online">Online</option>
+    </select>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mb-5">
+    <select id="filter-category" class="bg-card border border-sage-soft rounded-2xl px-3 py-2.5 text-[12px] font-bold text-ink">
+      <option value="">All Categories</option>
+    </select>
+    <select id="filter-expense-type" class="bg-card border border-sage-soft rounded-2xl px-3 py-2.5 text-[12px] font-bold text-ink">
+      <option value="">Need / Want</option>
+      <option value="need">Need</option>
+      <option value="want">Want</option>
+    </select>
+  </div>
+
+  <p class="text-[11px] font-bold text-sage mb-3" id="result-count">0 transactions</p>
+
+  <div id="history-list" class="flex flex-col gap-3"></div>
+  <div id="history-empty" class="hidden text-center py-14">
+    <p class="text-4xl mb-2">🔍</p>
+    <p class="text-[14px] font-bold text-sage">No matching transactions.</p>
+  </div>
+
+</div>
+
+<!-- Edit Sheet -->
+<div id="edit-modal" class="hidden">
+  <div class="sheet-overlay">
+    <div class="sheet-panel">
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
+      <h3 class="text-[20px] font-black mb-4">Edit Transaction</h3>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount</p>
+      <div class="flex items-center gap-2 mb-4 bg-card border border-sage-soft rounded-2xl px-4 py-3">
+        <span class="text-[18px] font-black text-crimson">₹</span>
+        <input id="edit-amount" type="number" min="0" step="0.01" class="text-[18px] font-black bg-transparent outline-none w-full text-ink" />
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Category</p>
+      <select id="edit-category" class="w-full bg-card border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-4 text-ink"></select>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Wallet</p>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button data-edit-wallet="cash" class="edit-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">💵 Cash</button>
+        <button data-edit-wallet="online" class="edit-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">💳 Online</button>
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Type</p>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button data-edit-expense-type="need" class="edit-expense-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">🧠 Need</button>
+        <button data-edit-expense-type="want" class="edit-expense-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">✨ Want</button>
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Note</p>
+      <input id="edit-note" type="text" class="w-full bg-card border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-5 text-ink" />
+
+      <div class="flex gap-3">
+        <button id="edit-cancel-btn" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Cancel</button>
+        <button id="edit-save-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+
+<script type="module" src="js/history.js"></script>
+</body>
+</html>

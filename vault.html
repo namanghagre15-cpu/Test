@@ -3,41 +3,41 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Vault · Student Expense Tracker</title>
+<title>Vault · Money follow</title>
 <meta name="theme-color" content="#171e19" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
-
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
       extend: {
         colors: {
-          charcoal: '#171e19',
-          crimson: '#ca0013',
-          sage: '#b7c6c2',
-          offwhite: '#eeebe3',
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
         },
         fontFamily: { sans: ['Nunito', 'sans-serif'] },
         borderRadius: { '4xl': '2.5rem' },
-        boxShadow: {
-          soft: '0 20px 50px -12px rgba(0,0,0,0.08)',
-          redglow: '0 10px 30px -5px rgba(202,0,19,0.35)',
-        },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)', redglow: '0 10px 30px -5px rgba(202,0,19,0.35)' },
       },
     },
   };
 </script>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body class="bg-offwhite text-charcoal font-sans" data-page="vault">
+<body class="bg-surface text-ink font-sans" data-page="vault">
 
 <div class="page-shell max-w-md mx-auto px-5">
 
@@ -46,7 +46,10 @@
       <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Discipline</p>
       <h1 class="text-[30px] font-black leading-tight">Savings Vault</h1>
     </div>
-    <button id="new-goal-btn" class="w-11 h-11 rounded-full bg-crimson text-white shadow-redglow flex items-center justify-center text-xl font-black">+</button>
+    <div class="flex items-center gap-2">
+      <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-lg" aria-label="Toggle privacy mode">👁️</button>
+      <button id="new-goal-btn" class="w-11 h-11 rounded-full bg-crimson text-white shadow-redglow flex items-center justify-center text-xl font-black">+</button>
+    </div>
   </header>
 
   <!-- Total Locked hero -->
@@ -54,19 +57,25 @@
     <div class="decor-blob" style="background: rgba(183,198,194,0.15);"></div>
     <div class="relative z-10">
       <p class="text-[12px] uppercase tracking-widest font-bold text-sage mb-1">Total locked away</p>
-      <p class="text-[32px] font-black leading-none" id="total-locked">₹0</p>
+      <p class="text-[32px] font-black leading-none mf-amt" id="total-locked">₹0</p>
       <p class="text-[13px] font-semibold text-sage mt-2">Money here won't show up in "Available to Spend" — that's the point 🔒</p>
     </div>
   </section>
 
   <!-- Goals list -->
-  <section id="goals-list" class="flex flex-col gap-4"></section>
+  <section id="goals-list" class="flex flex-col gap-4 mb-8"></section>
 
-  <div id="goals-empty" class="hidden text-center py-12">
+  <div id="goals-empty" class="hidden text-center py-8">
     <p class="text-4xl mb-2">🎯</p>
     <p class="text-[16px] font-black mb-1">No goals yet</p>
     <p class="text-[13px] font-bold text-sage">Tap + to lock away money for something big.</p>
   </div>
+
+  <!-- Challenges -->
+  <section id="challenges" class="mb-4">
+    <h2 class="text-[20px] font-black mb-3">🏆 Savings Challenges</h2>
+    <div id="challenges-list" class="flex flex-col gap-3"></div>
+  </section>
 
 </div>
 
@@ -76,24 +85,20 @@
     <div class="sheet-panel">
       <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
       <h3 class="text-[20px] font-black mb-4">New Savings Goal</h3>
-
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Goal title</p>
       <input id="goal-title" type="text" placeholder="e.g. New Laptop"
-        class="w-full bg-white border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage mb-4" />
-
+        class="w-full bg-card border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage mb-4 text-ink" />
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Target amount</p>
-      <div class="flex items-center gap-2 mb-4 bg-white border border-sage-soft rounded-2xl px-4 py-3">
+      <div class="flex items-center gap-2 mb-4 bg-card border border-sage-soft rounded-2xl px-4 py-3">
         <span class="text-[18px] font-black text-crimson">₹</span>
         <input id="goal-target" type="number" min="0" step="1" placeholder="0"
-          class="text-[18px] font-black bg-transparent outline-none w-full placeholder:text-sage" />
+          class="text-[18px] font-black bg-transparent outline-none w-full placeholder:text-sage text-ink" />
       </div>
-
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Deadline (optional)</p>
       <input id="goal-deadline" type="date"
-        class="w-full bg-white border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-5" />
-
+        class="w-full bg-card border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-5 text-ink" />
       <div class="flex gap-3">
-        <button id="goal-cancel-btn" class="flex-1 py-4 rounded-2xl bg-white border border-sage-soft font-black text-[14px]">Cancel</button>
+        <button id="goal-cancel-btn" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Cancel</button>
         <button id="goal-save-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Create Goal</button>
       </div>
       <p id="goal-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
@@ -101,32 +106,90 @@
   </div>
 </div>
 
-<!-- Contribute / Withdraw Sheet -->
+<!-- Contribute Sheet -->
 <div id="fund-modal" class="hidden">
   <div class="sheet-overlay">
     <div class="sheet-panel">
       <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
-      <h3 class="text-[20px] font-black mb-1" id="fund-modal-title">Add Funds</h3>
+      <h3 class="text-[20px] font-black mb-1">Add Funds</h3>
       <p class="text-[13px] font-bold text-sage mb-4" id="fund-modal-goal">Goal name</p>
-
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount</p>
-      <div class="flex items-center gap-2 mb-4 bg-white border border-sage-soft rounded-2xl px-4 py-3">
+      <div class="flex items-center gap-2 mb-4 bg-card border border-sage-soft rounded-2xl px-4 py-3">
         <span class="text-[18px] font-black text-crimson">₹</span>
         <input id="fund-amount" type="number" min="0" step="1" placeholder="0"
-          class="text-[18px] font-black bg-transparent outline-none w-full placeholder:text-sage" />
+          class="text-[18px] font-black bg-transparent outline-none w-full placeholder:text-sage text-ink" />
       </div>
-
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Wallet</p>
       <div class="grid grid-cols-2 gap-3 mb-5">
         <button data-fund-wallet="cash" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💵 Cash</button>
         <button data-fund-wallet="online" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💳 Online</button>
       </div>
-
       <div class="flex gap-3">
-        <button id="fund-cancel-btn" class="flex-1 py-4 rounded-2xl bg-white border border-sage-soft font-black text-[14px]">Cancel</button>
-        <button id="fund-save-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Confirm</button>
+        <button id="fund-cancel-btn" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Cancel</button>
+        <button id="fund-save-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Lock it in</button>
       </div>
       <p id="fund-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Emergency Withdraw Sheet: PIN + mandatory 5s delay -->
+<div id="withdraw-modal" class="hidden">
+  <div class="sheet-overlay">
+    <div class="sheet-panel">
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
+      <h3 class="text-[20px] font-black mb-1">⏳ Emergency Withdraw</h3>
+      <p class="text-[13px] font-bold text-sage mb-4" id="withdraw-modal-goal">Goal name</p>
+
+      <div id="withdraw-step-amount">
+        <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount to withdraw</p>
+        <div class="flex items-center gap-2 mb-4 bg-card border border-sage-soft rounded-2xl px-4 py-3">
+          <span class="text-[18px] font-black text-crimson">₹</span>
+          <input id="withdraw-amount" type="number" min="0" step="1" placeholder="0"
+            class="text-[18px] font-black bg-transparent outline-none w-full placeholder:text-sage text-ink" />
+        </div>
+        <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">To wallet</p>
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <button data-withdraw-wallet="cash" class="withdraw-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💵 Cash</button>
+          <button data-withdraw-wallet="online" class="withdraw-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💳 Online</button>
+        </div>
+        <button id="withdraw-continue-btn" class="w-full py-4 rounded-2xl bg-charcoal text-white font-black text-[14px]">Continue</button>
+      </div>
+
+      <div id="withdraw-step-pin" class="hidden">
+        <p class="text-[13px] font-bold text-ink mb-4">Enter your PIN to confirm this withdrawal.</p>
+        <div id="withdraw-pin-dots" class="flex gap-3 mb-5 justify-center">
+          <span class="lock-dot"></span><span class="lock-dot"></span><span class="lock-dot"></span><span class="lock-dot"></span>
+        </div>
+        <div class="numpad-grid mb-2">
+          <button data-wnum="1" class="numpad-btn">1</button>
+          <button data-wnum="2" class="numpad-btn">2</button>
+          <button data-wnum="3" class="numpad-btn">3</button>
+          <button data-wnum="4" class="numpad-btn">4</button>
+          <button data-wnum="5" class="numpad-btn">5</button>
+          <button data-wnum="6" class="numpad-btn">6</button>
+          <button data-wnum="7" class="numpad-btn">7</button>
+          <button data-wnum="8" class="numpad-btn">8</button>
+          <button data-wnum="9" class="numpad-btn">9</button>
+          <span></span>
+          <button data-wnum="0" class="numpad-btn">0</button>
+          <button id="withdraw-pin-back" class="numpad-btn text-xl">⌫</button>
+        </div>
+      </div>
+
+      <div id="withdraw-step-delay" class="hidden text-center py-4">
+        <div class="w-20 h-20 rounded-full border-4 border-crimson/20 flex items-center justify-center mx-auto mb-4">
+          <span class="text-[24px] font-black text-crimson" id="withdraw-countdown">5</span>
+        </div>
+        <p class="text-[14px] font-black mb-1">Take a breath 🧘</p>
+        <p class="text-[12px] font-bold text-sage px-6">This delay is intentional — it's here to stop impulse withdrawals.</p>
+        <button id="withdraw-confirm-btn" disabled class="w-full py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow mt-5 opacity-40">
+          Confirm Withdrawal
+        </button>
+      </div>
+
+      <p id="withdraw-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
+      <button id="withdraw-cancel-btn" class="w-full py-3 mt-3 text-[12px] font-black text-sage">Cancel</button>
     </div>
   </div>
 </div>

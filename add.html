@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Add Expense · Student Expense Tracker</title>
+<title>Add Expense · Money follow</title>
 <meta name="theme-color" content="#171e19" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
@@ -13,17 +13,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
+
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
       extend: {
         colors: {
-          charcoal: '#171e19',
-          crimson: '#ca0013',
-          sage: '#b7c6c2',
-          offwhite: '#eeebe3',
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
         },
         fontFamily: { sans: ['Nunito', 'sans-serif'] },
         borderRadius: { '4xl': '2.5rem' },
@@ -36,8 +42,9 @@
   };
 </script>
 <link rel="stylesheet" href="css/styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
-<body class="bg-offwhite text-charcoal font-sans" data-page="add">
+<body class="bg-surface text-ink font-sans" data-page="add">
 
 <div class="page-shell max-w-md mx-auto px-5">
 
@@ -46,26 +53,42 @@
       <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Log a spend</p>
       <h1 class="text-[30px] font-black leading-tight">Add Expense</h1>
     </div>
-    <a href="index.html" class="w-11 h-11 rounded-full bg-white border border-sage-soft shadow-soft flex items-center justify-center text-lg">✕</a>
+    <a href="index.html" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-lg">✕</a>
   </header>
 
   <!-- Category Horizontal Scroll Selector -->
-  <section class="mb-6">
+  <section class="mb-5">
     <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-3">Category</p>
-    <div id="category-row" class="snap-row scrollbar-hide">
-      <!-- injected by add.js -->
-    </div>
+    <div id="category-row" class="snap-row scrollbar-hide"></div>
   </section>
 
-  <!-- Amount Card -->
-  <section class="bg-white rounded-4xl shadow-soft p-6 mb-6 relative overflow-hidden">
+  <!-- Numpad-first Amount Entry -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5 relative overflow-hidden">
     <div class="decor-blob"></div>
     <div class="relative z-10">
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount</p>
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Amount</p>
+        <button id="clipboard-detect-btn" class="text-[11px] font-black text-crimson flex items-center gap-1">📋 Detect from Clipboard</button>
+      </div>
       <div class="flex items-center gap-2 mb-5">
-        <span class="text-[32px] font-black text-crimson">₹</span>
-        <input id="amount-input" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"
-          class="text-[32px] font-black bg-transparent outline-none w-full placeholder:text-sage" />
+        <span class="text-[36px] font-black text-crimson">₹</span>
+        <p id="amount-display" class="text-[36px] font-black leading-none">0</p>
+      </div>
+
+      <!-- Calculator-style Numpad -->
+      <div class="numpad-grid mb-5">
+        <button data-key="1" class="numpad-btn">1</button>
+        <button data-key="2" class="numpad-btn">2</button>
+        <button data-key="3" class="numpad-btn">3</button>
+        <button data-key="4" class="numpad-btn">4</button>
+        <button data-key="5" class="numpad-btn">5</button>
+        <button data-key="6" class="numpad-btn">6</button>
+        <button data-key="7" class="numpad-btn">7</button>
+        <button data-key="8" class="numpad-btn">8</button>
+        <button data-key="9" class="numpad-btn">9</button>
+        <button data-key="." class="numpad-btn">.</button>
+        <button data-key="0" class="numpad-btn">0</button>
+        <button data-key="back" class="numpad-btn text-xl">⌫</button>
       </div>
 
       <!-- Need vs Want toggle -->
@@ -75,20 +98,27 @@
         <button data-expense-type="want" class="expense-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">✨ Want</button>
       </div>
 
+      <!-- Wallet -->
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Wallet</p>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <button data-wallet-type="cash" class="wallet-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💵 Cash</button>
+        <button data-wallet-type="online" class="wallet-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💳 Online</button>
+      </div>
+
       <!-- Note -->
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Note (optional)</p>
       <input id="note-input" type="text" placeholder="e.g. Canteen lunch with friends"
-        class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage" />
+        class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage text-ink" />
     </div>
   </section>
 
   <!-- Payment method actions -->
   <section class="flex flex-col gap-3">
-    <button id="pay-cash-btn" class="w-full py-4 rounded-3xl bg-white border border-sage-soft font-black text-[15px] flex items-center justify-center gap-2">
-      💵 Paid with Cash
+    <button id="save-btn" class="w-full py-4 rounded-3xl bg-charcoal text-white font-black text-[15px] flex items-center justify-center gap-2">
+      💾 Save Expense
     </button>
-    <button id="pay-qr-btn" class="w-full py-4 rounded-3xl bg-crimson text-white font-black text-[15px] shadow-redglow flex items-center justify-center gap-2">
-      📷 Scan QR / Pay Online
+    <button id="scan-qr-btn" class="w-full py-4 rounded-3xl bg-crimson text-white font-black text-[15px] shadow-redglow flex items-center justify-center gap-2">
+      📷 Scan QR & Pay via UPI
     </button>
   </section>
 
@@ -96,27 +126,62 @@
 
 </div>
 
-<!-- QR Scan Simulation Modal -->
+<!-- Real QR Scanner Modal -->
 <div id="scan-modal" class="hidden">
   <div class="sheet-overlay">
     <div class="sheet-panel text-center">
-      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-6"></div>
-      <div id="scan-scanning" class="flex flex-col items-center gap-4 py-4">
-        <div class="w-20 h-20 rounded-3xl bg-charcoal flex items-center justify-center text-3xl">📷</div>
-        <div class="spinner"></div>
-        <p class="font-black text-[16px]">Scanning QR code…</p>
-        <p class="text-[12px] font-bold text-sage">Opening UPI app to complete payment</p>
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-4"></div>
+
+      <div id="scan-camera-view">
+        <p class="font-black text-[16px] mb-3">Point at a UPI QR code</p>
+        <div class="qr-video-wrap mb-4">
+          <video id="qr-video" autoplay playsinline muted></video>
+          <div class="qr-reticle"></div>
+        </div>
+        <p id="qr-status" class="text-[12px] font-bold text-sage mb-3">Starting camera…</p>
+        <button id="qr-manual-entry-btn" class="text-[12px] font-black text-crimson underline">Enter UPI ID manually instead</button>
       </div>
-      <div id="scan-success" class="hidden flex flex-col items-center gap-3 py-4">
-        <div class="w-20 h-20 rounded-3xl bg-crimson/10 flex items-center justify-center text-3xl">✅</div>
-        <p class="font-black text-[16px]">Scan simulated!</p>
+
+      <div id="scan-manual-view" class="hidden text-left">
+        <p class="font-black text-[16px] mb-4 text-center">Enter UPI ID manually</p>
+        <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Payee UPI ID</p>
+        <input id="manual-upi-id" type="text" placeholder="e.g. shopkeeper@okhdfc"
+          class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-4 text-ink" />
+        <button id="manual-upi-continue-btn" class="w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[14px]">Continue</button>
+      </div>
+
+      <div id="scan-confirm-view" class="hidden text-left">
+        <div class="flex flex-col items-center mb-4">
+          <div class="w-16 h-16 rounded-3xl bg-crimson/10 flex items-center justify-center text-3xl mb-2">✅</div>
+          <p class="font-black text-[16px]">QR detected</p>
+          <p class="text-[12px] font-bold text-sage" id="qr-payee-line">Paying —</p>
+        </div>
+        <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Amount to pay</p>
+        <div class="flex items-center gap-2 mb-5 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3">
+          <span class="text-[20px] font-black text-crimson">₹</span>
+          <input id="qr-confirm-amount" type="number" min="0" step="0.01" placeholder="0"
+            class="text-[20px] font-black bg-transparent outline-none w-full placeholder:text-sage text-ink" />
+        </div>
+        <div class="flex gap-3">
+          <button id="qr-confirm-cancel" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Cancel</button>
+          <button id="qr-confirm-pay" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Open UPI App</button>
+        </div>
+      </div>
+
+      <div id="scan-pending-view" class="hidden flex flex-col items-center gap-3 py-4">
+        <div class="w-20 h-20 rounded-3xl bg-crimson/10 flex items-center justify-center text-3xl">📲</div>
+        <p class="font-black text-[16px]">Opening your UPI app…</p>
         <p class="text-[13px] font-bold text-sage px-4">
-          We'll mark this as <b class="text-charcoal">Pending</b> in your Online wallet until you confirm success from the dashboard.
+          This expense is saved as <b class="text-ink">Pending</b>. Confirm on the dashboard once the payment goes through.
         </p>
       </div>
+
+      <button id="scan-close-btn" class="mt-5 text-[12px] font-black text-sage">Close</button>
     </div>
   </div>
 </div>
+
+<canvas id="qr-canvas" class="hidden"></canvas>
 
 <div id="bottom-nav"></div>
 

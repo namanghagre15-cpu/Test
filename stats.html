@@ -3,34 +3,34 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Stats · Student Expense Tracker</title>
+<title>Stats · Money follow</title>
 <meta name="theme-color" content="#171e19" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
-
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
       extend: {
         colors: {
-          charcoal: '#171e19',
-          crimson: '#ca0013',
-          sage: '#b7c6c2',
-          offwhite: '#eeebe3',
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
         },
         fontFamily: { sans: ['Nunito', 'sans-serif'] },
         borderRadius: { '4xl': '2.5rem' },
-        boxShadow: {
-          soft: '0 20px 50px -12px rgba(0,0,0,0.08)',
-          redglow: '0 10px 30px -5px rgba(202,0,19,0.35)',
-        },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)', redglow: '0 10px 30px -5px rgba(202,0,19,0.35)' },
       },
     },
   };
@@ -38,59 +38,74 @@
 <link rel="stylesheet" href="css/styles.css" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
-<body class="bg-offwhite text-charcoal font-sans" data-page="stats">
+<body class="bg-surface text-ink font-sans" data-page="stats">
 
 <div class="page-shell max-w-md mx-auto px-5">
 
-  <header class="pt-14 pb-6">
+  <header class="pt-14 pb-5">
     <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Know your money</p>
     <h1 class="text-[30px] font-black leading-tight">Stats & Analytics</h1>
   </header>
 
+  <!-- Period tabs -->
+  <div class="segmented mb-6">
+    <button data-period="7" class="period-btn active">7D</button>
+    <button data-period="30" class="period-btn">30D</button>
+    <button data-period="90" class="period-btn">3M</button>
+    <button data-period="all" class="period-btn">All</button>
+  </div>
+
   <!-- Income vs Expense Bento row -->
-  <section class="grid grid-cols-2 gap-3 mb-6">
-    <div class="bg-white rounded-3xl border border-sage-soft p-4">
+  <section class="grid grid-cols-2 gap-3 mb-4">
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
       <div class="bento-icon mb-2">📥</div>
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Income (month)</p>
-      <p class="text-[18px] font-black" id="month-income">₹0</p>
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Income</p>
+      <p class="text-[18px] font-black" id="period-income">₹0</p>
     </div>
-    <div class="bg-white rounded-3xl border border-sage-soft p-4">
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
       <div class="bento-icon mb-2">📤</div>
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Expense (month)</p>
-      <p class="text-[18px] font-black" id="month-expense">₹0</p>
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Expense</p>
+      <p class="text-[18px] font-black" id="period-expense">₹0</p>
     </div>
   </section>
 
-  <!-- Weekly Spend Trend -->
-  <section class="bg-white rounded-4xl shadow-soft p-6 mb-6">
-    <h2 class="text-[20px] font-black mb-1">This Week's Spend</h2>
-    <p class="text-[12px] font-bold text-sage mb-4">Daily expense trend</p>
-    <div class="relative h-48">
-      <canvas id="weekly-chart"></canvas>
+  <!-- Biggest expense + avg daily -->
+  <section class="grid grid-cols-2 gap-3 mb-6">
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Biggest Expense</p>
+      <p class="text-[16px] font-black" id="biggest-expense">₹0</p>
+      <p class="text-[11px] font-bold text-sage" id="biggest-expense-cat">—</p>
     </div>
+    <div class="bg-card rounded-3xl border border-sage-soft p-4">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Avg Daily Spend</p>
+      <p class="text-[16px] font-black" id="avg-daily">₹0</p>
+    </div>
+  </section>
+
+  <!-- Spend Trend -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-6">
+    <h2 class="text-[20px] font-black mb-1">Spend Trend</h2>
+    <p class="text-[12px] font-bold text-sage mb-4">Daily expense over the selected period</p>
+    <div class="relative h-48"><canvas id="weekly-chart"></canvas></div>
   </section>
 
   <!-- Category Breakdown -->
-  <section class="bg-white rounded-4xl shadow-soft p-6 mb-6">
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-6">
     <h2 class="text-[20px] font-black mb-1">Category Breakdown</h2>
     <p class="text-[12px] font-bold text-sage mb-4">Where your money goes</p>
-    <div class="relative h-56 flex items-center justify-center">
-      <canvas id="category-chart"></canvas>
-    </div>
+    <div class="relative h-56 flex items-center justify-center"><canvas id="category-chart"></canvas></div>
     <div id="category-empty" class="hidden text-center py-6">
       <p class="text-4xl mb-2">📊</p>
-      <p class="text-[14px] font-bold text-sage">No expenses logged yet.</p>
+      <p class="text-[14px] font-bold text-sage">No expenses in this period.</p>
     </div>
     <div id="category-legend" class="grid grid-cols-2 gap-2 mt-4"></div>
   </section>
 
   <!-- Needs vs Wants -->
-  <section class="bg-white rounded-4xl shadow-soft p-6 mb-6">
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-6">
     <h2 class="text-[20px] font-black mb-1">Needs vs Wants</h2>
     <p class="text-[12px] font-bold text-sage mb-4">Discipline check</p>
-    <div class="relative h-40">
-      <canvas id="needs-wants-chart"></canvas>
-    </div>
+    <div class="relative h-40"><canvas id="needs-wants-chart"></canvas></div>
     <div class="grid grid-cols-2 gap-3 mt-4">
       <div class="glass-card rounded-2xl p-3 border border-sage-soft">
         <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">🧠 Needs</p>
@@ -101,6 +116,13 @@
         <p class="text-[14px] font-black" id="want-amount">₹0</p>
       </div>
     </div>
+  </section>
+
+  <!-- Cash vs Online -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-6">
+    <h2 class="text-[20px] font-black mb-1">Cash vs Online</h2>
+    <p class="text-[12px] font-bold text-sage mb-4">Spending by payment method</p>
+    <div class="relative h-40"><canvas id="cash-online-chart"></canvas></div>
   </section>
 
 </div>
