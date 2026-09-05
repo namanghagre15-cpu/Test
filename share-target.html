@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Add from Share · Money follow</title>
+<meta name="theme-color" content="#171e19" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
+<script src="js/boot-guard.js"></script>
+
+<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
+        },
+        fontFamily: { sans: ['Nunito', 'sans-serif'] },
+        borderRadius: { '4xl': '2.5rem' },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)', redglow: '0 10px 30px -5px rgba(202,0,19,0.35)' },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-surface text-ink font-sans" data-page="share-target">
+
+<div class="page-shell max-w-md mx-auto px-5">
+
+  <header class="flex items-center justify-between pt-14 pb-6">
+    <div>
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Shared to Money follow</p>
+      <h1 class="text-[26px] font-black leading-tight">Add from Share</h1>
+    </div>
+    <a href="index.html" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </a>
+  </header>
+
+  <!-- Feature disabled state -->
+  <div id="disabled-card" class="hidden bg-card rounded-4xl shadow-soft p-6 text-center">
+    <div class="w-14 h-14 rounded-3xl bg-sage/15 flex items-center justify-center text-sage mx-auto mb-4" id="disabled-icon"></div>
+    <h2 class="text-[16px] font-black mb-2">Share-to-Add is off</h2>
+    <p class="text-[13px] font-bold text-sage mb-5 leading-relaxed">Turn this on in Settings to pre-fill expenses from a shared bank/UPI message. It's off by default — nothing is read unless you enable it.</p>
+    <a href="settings.html" class="block w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px]">Go to Settings</a>
+  </div>
+
+  <!-- Sensitive-content blocked state -->
+  <div id="blocked-card" class="hidden bg-card rounded-4xl shadow-soft p-6 text-center">
+    <div class="w-14 h-14 rounded-3xl bg-crimson/10 flex items-center justify-center text-crimson mx-auto mb-4" id="blocked-icon"></div>
+    <h2 class="text-[16px] font-black mb-2">Not processed</h2>
+    <p class="text-[13px] font-bold text-sage mb-5 leading-relaxed">This message looks like it may contain an OTP or a verification/security code, so Money follow did not read or store any of it.</p>
+    <a href="index.html" class="block w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px]">Back to Dashboard</a>
+  </div>
+
+  <!-- No amount detected -->
+  <div id="no-amount-card" class="hidden bg-card rounded-4xl shadow-soft p-6 text-center">
+    <div class="w-14 h-14 rounded-3xl bg-sage/15 flex items-center justify-center text-sage mx-auto mb-4" id="no-amount-icon"></div>
+    <h2 class="text-[16px] font-black mb-2">Couldn't find an amount</h2>
+    <p class="text-[13px] font-bold text-sage mb-5 leading-relaxed">This message didn't contain anything that looked like a ₹ amount, so nothing was pre-filled.</p>
+    <a href="add.html" class="block w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px]">Add Manually</a>
+  </div>
+
+  <!-- Confirm detected entry -->
+  <div id="confirm-card" class="hidden">
+    <div class="bg-card rounded-4xl shadow-soft p-6 mb-4">
+      <p class="text-[11px] font-bold text-sage mb-1 flex items-center gap-1.5" id="detected-badge"></p>
+      <div class="flex items-center gap-2 mb-5">
+        <span class="text-[28px] font-black text-crimson">₹</span>
+        <input id="confirm-amount" type="number" step="0.01" min="0" class="text-[32px] font-black bg-transparent outline-none w-full text-ink" />
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Type</p>
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button data-direction="expense" class="direction-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">Expense</button>
+        <button data-direction="income" class="direction-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">Income</button>
+      </div>
+
+      <div id="category-wrap">
+        <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Category</p>
+        <select id="confirm-category" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-bold outline-none mb-4 text-ink"></select>
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Wallet</p>
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button data-wallet="cash" class="wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">Cash</button>
+        <button data-wallet="online" class="wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">Online</button>
+      </div>
+
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Note</p>
+      <input id="confirm-note" type="text" placeholder="Optional note" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-1 text-ink" />
+      <p class="text-[10px] font-bold text-sage mb-2">Only what you see here gets saved — the original message is discarded.</p>
+    </div>
+    <div class="flex gap-3">
+      <button id="discard-btn" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Discard</button>
+      <button id="confirm-add-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Add</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="bottom-nav"></div>
+<script type="module" src="js/share-target.js"></script>
+</body>
+</html>

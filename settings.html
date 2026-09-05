@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Settings · Money follow</title>
 <meta name="theme-color" content="#171e19" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -54,6 +55,14 @@
     </a>
   </header>
 
+  <!-- Payment (for Khata reminders) -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4 flex items-center gap-2"><span class="text-crimson"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg></span>Payment</h2>
+    <p class="text-[13px] font-bold mb-1">Your UPI ID</p>
+    <p class="text-[11px] font-bold text-sage mb-3">Optional. When set, Khata reminders include a one-tap payment link pre-filled with the amount, so the other person can pay you directly from their own UPI app.</p>
+    <input id="user-upi-id-input" type="text" placeholder="yourname@bank" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none text-ink" />
+  </section>
+
   <!-- Appearance -->
   <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
     <h2 class="text-[16px] font-black mb-4 flex items-center gap-2"><span class="text-crimson"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="8.2" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.8" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="9.5" cy="15" r="1.1" fill="currentColor" stroke="none"/><path d="M12 21a9 9 0 0 1 0-18c1 3 3 2.5 3 5.5 0 2 3 1 5 3a9 9 0 0 1-8 9.5Z"/></svg></span>Appearance</h2>
@@ -102,6 +111,18 @@
       </div>
     </div>
     <p id="security-error" class="hidden text-[12px] font-bold text-crimson"></p>
+  </section>
+
+  <!-- Privacy -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4 flex items-center gap-2"><span class="text-crimson"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 4.8 3.2 7.9 7.5 9 4.3-1.1 7.5-4.2 7.5-9V6L12 3Z"/><path d="m9 12 2.2 2.2L15.5 9.5"/></svg></span>Privacy</h2>
+    <div class="flex items-center justify-between">
+      <div class="pr-3">
+        <p class="text-[13px] font-bold">Share-to-Add (Beta)</p>
+        <p class="text-[11px] font-bold text-sage leading-snug mt-0.5">Off by default. When on, you can share a bank/UPI message from your phone's Share menu straight into Money follow to pre-fill an entry. OTP and verification-code messages are always ignored — never read or stored, even when this is on. Everything happens on this device; nothing is sent anywhere.</p>
+      </div>
+      <button id="share-to-add-switch" class="mf-switch shrink-0"><span class="knob"></span></button>
+    </div>
   </section>
 
   <!-- Budget -->
@@ -167,6 +188,11 @@
   <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
     <h2 class="text-[16px] font-black mb-4 flex items-center gap-2"><span class="text-crimson"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l4 4v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M8 4v5h7V4M8 21v-7h8v7"/></svg></span>Backup &amp; Restore</h2>
     <p class="text-[12px] font-bold text-sage mb-4">Your data lives only on this device. Export a backup before switching phones.</p>
+    <div class="flex items-center gap-2 mb-3">
+      <input id="backup-password-input" type="password" placeholder="Optional password to encrypt export"
+        class="flex-1 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[13px] font-semibold outline-none text-ink" />
+    </div>
+    <p class="text-[10px] font-bold text-sage mb-3">Leave blank for a plain export, or set a password so the file is encrypted (AES-256) — you'll need the same password to restore it. If you set one, remember it: it can't be recovered.</p>
     <div class="grid grid-cols-2 gap-3 mb-3">
       <button id="export-json-btn" class="py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px] flex items-center justify-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m6.5 11 5.5 5.5L17.5 11"/><path d="M4 21h16"/></svg>Export JSON</button>
       <label class="py-3.5 rounded-2xl border border-sage-soft font-black text-[13px] text-center cursor-pointer">
