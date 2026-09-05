@@ -17,6 +17,7 @@
     document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
   } catch (e) {}
 </script>
+<script src="js/boot-guard.js"></script>
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -47,8 +48,8 @@
       <h1 class="text-[30px] font-black leading-tight">Savings Vault</h1>
     </div>
     <div class="flex items-center gap-2">
-      <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-lg" aria-label="Toggle privacy mode">👁️</button>
-      <button id="new-goal-btn" class="w-11 h-11 rounded-full bg-crimson text-white shadow-redglow flex items-center justify-center text-xl font-black">+</button>
+      <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-ink" aria-label="Toggle privacy mode"></button>
+      <button id="new-goal-btn" aria-label="New goal" class="w-11 h-11 rounded-full bg-crimson text-white shadow-redglow flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
   </header>
 
@@ -58,7 +59,7 @@
     <div class="relative z-10">
       <p class="text-[12px] uppercase tracking-widest font-bold text-sage mb-1">Total locked away</p>
       <p class="text-[32px] font-black leading-none mf-amt" id="total-locked">₹0</p>
-      <p class="text-[13px] font-semibold text-sage mt-2">Money here won't show up in "Available to Spend" — that's the point 🔒</p>
+      <p class="text-[13px] font-semibold text-sage mt-2">Money here won't show up in "Available to Spend" — that's the point</p>
     </div>
   </section>
 
@@ -66,14 +67,14 @@
   <section id="goals-list" class="flex flex-col gap-4 mb-8"></section>
 
   <div id="goals-empty" class="hidden text-center py-8">
-    <p class="text-4xl mb-2">🎯</p>
+    <div class="w-12 h-12 mx-auto mb-2 rounded-2xl bg-sage/15 flex items-center justify-center text-sage"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>
     <p class="text-[16px] font-black mb-1">No goals yet</p>
     <p class="text-[13px] font-bold text-sage">Tap + to lock away money for something big.</p>
   </div>
 
   <!-- Challenges -->
   <section id="challenges" class="mb-4">
-    <h2 class="text-[20px] font-black mb-3">🏆 Savings Challenges</h2>
+    <h2 class="text-[20px] font-black mb-3 flex items-center gap-2"><span class="text-crimson"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a3 3 0 0 0 3 4M17 5h3a3 3 0 0 1-3 4"/><path d="M12 14v3M9 21h6M9.5 21c0-1.8.7-2.8 2.5-3 1.8.2 2.5 1.2 2.5 3"/></svg></span>Savings Challenges</h2>
     <div id="challenges-list" class="flex flex-col gap-3"></div>
   </section>
 
@@ -121,8 +122,8 @@
       </div>
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Wallet</p>
       <div class="grid grid-cols-2 gap-3 mb-5">
-        <button data-fund-wallet="cash" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💵 Cash</button>
-        <button data-fund-wallet="online" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💳 Online</button>
+        <button data-fund-wallet="cash" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M5.5 9v0M18.5 15v0"/></svg>Cash</button>
+        <button data-fund-wallet="online" class="fund-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>Online</button>
       </div>
       <div class="flex gap-3">
         <button id="fund-cancel-btn" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Cancel</button>
@@ -138,7 +139,7 @@
   <div class="sheet-overlay">
     <div class="sheet-panel">
       <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
-      <h3 class="text-[20px] font-black mb-1">⏳ Emergency Withdraw</h3>
+      <h3 class="text-[20px] font-black mb-1 flex items-center gap-2"><span class="text-crimson"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 4.8 3.2 7.9 7.5 9 4.3-1.1 7.5-4.2 7.5-9V6L12 3Z"/><path d="m9 12 2.2 2.2L15.5 9.5"/></svg></span>Emergency Withdraw</h3>
       <p class="text-[13px] font-bold text-sage mb-4" id="withdraw-modal-goal">Goal name</p>
 
       <div id="withdraw-step-amount">
@@ -150,8 +151,8 @@
         </div>
         <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">To wallet</p>
         <div class="grid grid-cols-2 gap-3 mb-5">
-          <button data-withdraw-wallet="cash" class="withdraw-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💵 Cash</button>
-          <button data-withdraw-wallet="online" class="withdraw-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px]">💳 Online</button>
+          <button data-withdraw-wallet="cash" class="withdraw-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M5.5 9v0M18.5 15v0"/></svg>Cash</button>
+          <button data-withdraw-wallet="online" class="withdraw-wallet-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>Online</button>
         </div>
         <button id="withdraw-continue-btn" class="w-full py-4 rounded-2xl bg-charcoal text-white font-black text-[14px]">Continue</button>
       </div>
@@ -173,7 +174,7 @@
           <button data-wnum="9" class="numpad-btn">9</button>
           <span></span>
           <button data-wnum="0" class="numpad-btn">0</button>
-          <button id="withdraw-pin-back" class="numpad-btn text-xl">⌫</button>
+          <button id="withdraw-pin-back" class="numpad-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H9l-6.5-8Z"/><path d="m11.5 9.5 5 5m0-5-5 5"/></svg></button>
         </div>
       </div>
 
@@ -181,7 +182,7 @@
         <div class="w-20 h-20 rounded-full border-4 border-crimson/20 flex items-center justify-center mx-auto mb-4">
           <span class="text-[24px] font-black text-crimson" id="withdraw-countdown">5</span>
         </div>
-        <p class="text-[14px] font-black mb-1">Take a breath 🧘</p>
+        <p class="text-[14px] font-black mb-1">Take a breath</p>
         <p class="text-[12px] font-bold text-sage px-6">This delay is intentional — it's here to stop impulse withdrawals.</p>
         <button id="withdraw-confirm-btn" disabled class="w-full py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow mt-5 opacity-40">
           Confirm Withdrawal

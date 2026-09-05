@@ -17,6 +17,7 @@
     document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
   } catch (e) {}
 </script>
+<script src="js/boot-guard.js"></script>
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -41,9 +42,14 @@
 
 <div class="page-shell max-w-md mx-auto px-5">
 
-  <header class="pt-14 pb-6">
-    <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Social money</p>
-    <h1 class="text-[30px] font-black leading-tight">Khata</h1>
+  <header class="flex items-center justify-between pt-14 pb-6">
+    <div>
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Social money</p>
+      <h1 class="text-[30px] font-black leading-tight">Khata</h1>
+    </div>
+    <a href="settings.html" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-ink shrink-0" aria-label="Settings">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2.06 2.06 0 1 1-2.92 2.92l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V19.6a2.06 2.06 0 1 1-4.12 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2.06 2.06 0 1 1-2.92-2.92l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H4.4a2.06 2.06 0 1 1 0-4.12h.09A1.7 1.7 0 0 0 6.05 6.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2.06 2.06 0 1 1 2.92-2.92l.06.06a1.7 1.7 0 0 0 1.87.34H10.6A1.7 1.7 0 0 0 11.63 1H11.7a2.06 2.06 0 1 1 4.12 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2.06 2.06 0 1 1 2.92 2.92l-.06.06a1.7 1.7 0 0 0-.34 1.87v.06a1.7 1.7 0 0 0 1.56 1.03h.09a2.06 2.06 0 1 1 0 4.12h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/></svg>
+    </a>
   </header>
 
   <!-- Totals -->
@@ -80,8 +86,8 @@
 
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Direction</p>
       <div class="grid grid-cols-2 gap-3 mb-4">
-        <button data-direction="owe_me" class="ledger-dir-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">🤲 They owe me</button>
-        <button data-direction="i_owe" class="ledger-dir-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">💳 I owe them</button>
+        <button data-direction="owe_me" class="ledger-dir-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><path d="M12 5v14M6 14l6 6 6-6"/></svg>They owe me</button>
+        <button data-direction="i_owe" class="ledger-dir-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>I owe them</button>
       </div>
 
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Note (optional)</p>
@@ -95,7 +101,7 @@
     <h2 class="text-[18px] font-black mb-3">All Entries</h2>
     <div id="ledger-list" class="flex flex-col gap-3"></div>
     <div id="ledger-empty" class="hidden text-center py-10">
-      <p class="text-4xl mb-2">🤝</p>
+      <div class="w-12 h-12 mx-auto mb-2 rounded-2xl bg-sage/15 flex items-center justify-center text-sage"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><path d="m2 12 4-3.5 3 2 4-3 3 2.2 4-2.7 2 2.5-6 5-2.2-1.7-3.6 2.7L7 13.5Z"/><path d="m6.5 8.5 4.2 5.2M17 9.5l-4 5"/></svg></div>
       <p class="text-[14px] font-bold text-sage">No lend/borrow entries yet.</p>
     </div>
   </section>
@@ -118,14 +124,24 @@
 
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Who paid?</p>
       <div class="grid grid-cols-2 gap-3 mb-4">
-        <button data-payer="me" class="split-payer-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">🙋 I paid</button>
-        <button data-payer="other" class="split-payer-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">🧑 Someone else</button>
+        <button data-payer="me" class="split-payer-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg>I paid</button>
+        <button data-payer="other" class="split-payer-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 19.5c0-3.4 2.8-5.7 6.2-5.7s6.2 2.3 6.2 5.7"/><path d="M15.5 5a3.2 3.2 0 0 1 0 6.3"/><path d="M17 13.9c2.6.5 4.2 2.5 4.2 5.6"/></svg>Someone else</button>
       </div>
 
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Split between (names, comma separated — include yourself as "Me")</p>
-      <input id="split-participants" type="text" placeholder="Me, Rohan, Priya"
-        class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none mb-2 text-ink" />
-      <p class="text-[11px] font-bold text-sage mb-4" id="split-preview">Enter names to see the per-person share.</p>
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Split between</p>
+        <span id="split-people-count" class="text-[11px] font-black text-crimson bg-crimson/10 rounded-full px-2.5 py-1">0 people</span>
+      </div>
+      <div class="flex items-center gap-2 mb-3">
+        <input id="split-person-input" type="text" placeholder="Add a person's name"
+          class="flex-1 bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none text-ink" />
+        <button id="split-add-me-btn" type="button"
+          class="shrink-0 px-3 h-[46px] rounded-2xl border border-sage-soft font-black text-[12px] text-ink">+ Me</button>
+        <button id="split-add-person-btn" type="button" aria-label="Add person"
+          class="shrink-0 w-[46px] h-[46px] rounded-2xl bg-charcoal text-white flex items-center justify-center"></button>
+      </div>
+      <div id="split-people-list" class="flex flex-wrap gap-2 mb-2"></div>
+      <p class="text-[11px] font-bold text-sage mb-4" id="split-preview">Add at least 2 people to see the per-person share.</p>
 
       <button id="save-split-btn" class="w-full py-4 rounded-3xl bg-charcoal text-white font-black text-[15px]">Save Split</button>
       <p id="split-error" class="hidden text-center text-[12px] font-bold text-crimson mt-3"></p>
@@ -135,7 +151,7 @@
     <h2 class="text-[18px] font-black mb-3">Past Splits</h2>
     <div id="split-list" class="flex flex-col gap-3"></div>
     <div id="split-empty" class="hidden text-center py-10">
-      <p class="text-4xl mb-2">🧮</p>
+      <div class="w-12 h-12 mx-auto mb-2 rounded-2xl bg-sage/15 flex items-center justify-center text-sage"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><path d="M6 3h12v18l-2.5-1.6L13 21l-2-1.6L9 21l-2.5-1.6L4.5 21V3H6Z"/><path d="M8 8h8M8 11.5h8M8 15h5"/></svg></div>
       <p class="text-[14px] font-bold text-sage">No splits recorded yet.</p>
     </div>
   </section>

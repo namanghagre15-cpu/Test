@@ -19,6 +19,7 @@
     document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
   } catch (e) {}
 </script>
+<script src="js/boot-guard.js"></script>
 
 <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -54,10 +55,10 @@
       <h1 class="text-[30px] font-black leading-tight text-ink" id="greeting-name">Naman</h1>
     </div>
     <div class="flex items-center gap-2">
-      <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-lg" aria-label="Toggle privacy mode">👁️</button>
-      <a href="settings.html" class="relative w-12 h-12 block">
-        <div class="w-12 h-12 rounded-full bg-charcoal border-2 border-white shadow-soft flex items-center justify-center text-lg">
-          🎓
+      <button id="ghost-toggle-btn" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center text-ink" aria-label="Toggle privacy mode"></button>
+      <a href="settings.html" class="relative w-11 h-11 block" aria-label="Settings">
+        <div class="w-11 h-11 rounded-full bg-charcoal border-2 border-white shadow-soft flex items-center justify-center text-white">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2.06 2.06 0 1 1-2.92 2.92l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V19.6a2.06 2.06 0 1 1-4.12 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2.06 2.06 0 1 1-2.92-2.92l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H4.4a2.06 2.06 0 1 1 0-4.12h.09A1.7 1.7 0 0 0 6.05 6.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2.06 2.06 0 1 1 2.92-2.92l.06.06a1.7 1.7 0 0 0 1.87.34H10.6A1.7 1.7 0 0 0 11.63 1H11.7a2.06 2.06 0 1 1 4.12 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2.06 2.06 0 1 1 2.92 2.92l-.06.06a1.7 1.7 0 0 0-.34 1.87v.06a1.7 1.7 0 0 0 1.56 1.03h.09a2.06 2.06 0 1 1 0 4.12h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/></svg>
         </div>
         <span id="notif-badge" class="hidden absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-crimson border-2 border-surface"></span>
       </a>
@@ -66,9 +67,12 @@
 
   <!-- Low balance alert -->
   <div id="low-balance-alert" class="hidden mb-4 rounded-2xl bg-crimson/10 border border-crimson/30 px-4 py-3 flex items-center gap-3">
-    <span class="text-lg">🚨</span>
+    <span class="text-crimson shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 22 20H2L12 3.5Z"/><path d="M12 10v4.2"/><circle cx="12" cy="17.3" r="1" fill="currentColor" stroke="none"/></svg></span>
     <p class="text-[13px] font-bold text-crimson leading-snug">Low balance! Available to spend is under your alert threshold.</p>
   </div>
+
+  <!-- Category budget alerts -->
+  <div id="category-budget-alerts" class="mb-4 space-y-2"></div>
 
   <!-- Hero Feature Card -->
   <section class="relative overflow-hidden bg-card rounded-4xl shadow-soft p-6 mb-6">
@@ -76,8 +80,8 @@
 
     <div class="relative z-10">
       <div class="flex items-center justify-between mb-5">
-        <div class="w-16 h-16 rounded-2xl bg-card shadow-soft border border-sage-soft flex items-center justify-center text-3xl">
-          💰
+        <div class="w-16 h-16 rounded-2xl bg-card shadow-soft border border-sage-soft flex items-center justify-center text-crimson">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M5.5 9v0M18.5 15v0"/></svg>
         </div>
         <span class="text-[10px] uppercase tracking-widest font-bold text-sage">This month</span>
       </div>
@@ -90,14 +94,14 @@
       <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="glass-card rounded-2xl p-3 border border-sage-soft">
           <div class="flex items-center gap-2 mb-2">
-            <div class="bento-icon">🛡️</div>
+            <div class="bento-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 4.8 3.2 7.9 7.5 9 4.3-1.1 7.5-4.2 7.5-9V6L12 3Z"/><path d="m9 12 2.2 2.2L15.5 9.5"/></svg></div>
             <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Safe Budget</p>
           </div>
           <p class="text-[14px] font-bold text-ink mf-amt" id="safe-budget">₹0</p>
         </div>
         <div class="glass-card rounded-2xl p-3 border border-sage-soft">
           <div class="flex items-center gap-2 mb-2">
-            <div class="bento-icon">🔒</div>
+            <div class="bento-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg></div>
             <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Vault Locked</p>
           </div>
           <p class="text-[14px] font-bold text-ink mf-amt" id="vault-locked">₹0</p>
@@ -115,7 +119,7 @@
 
       <!-- Alert box -->
       <div class="rounded-2xl bg-sage/20 border border-sage-soft px-4 py-3 flex items-center gap-3">
-        <span class="text-lg">💡</span>
+        <span class="text-crimson shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18"/></svg></span>
         <p class="text-[13px] font-bold text-ink leading-snug" id="alert-text">You're tracking well this week. Keep it up!</p>
       </div>
     </div>
@@ -132,7 +136,7 @@
     </div>
     <div class="bg-card rounded-3xl border border-sage-soft p-4">
       <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">No-Spend Streak</p>
-      <p class="text-[22px] font-black" id="streak-count">0 <span class="text-[13px]">days 🔥</span></p>
+      <p class="text-[22px] font-black" id="streak-count">0 <span class="text-[13px]">days</span> <span class="text-crimson inline-flex align-middle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s5 4 5 9a5 5 0 0 1-10 0c0-1 .3-1.8.8-2.7.4.9 1 1.4 1.7 1.4-.3-2 .4-4 2.5-5.7-.3 1.4.2 2.3 1 3 .6.5 1 1.3 1 2.3a2.5 2.5 0 0 1-5 0"/></svg></span></p>
     </div>
   </section>
 
@@ -150,10 +154,10 @@
 
   <!-- Quick Links -->
   <section class="grid grid-cols-4 gap-2 mb-6">
-    <a href="history.html" class="quick-tile"><span class="text-xl">🧾</span>History</a>
-    <a href="khata.html" class="quick-tile"><span class="text-xl">🤝</span>Khata</a>
-    <a href="vault.html#challenges" class="quick-tile"><span class="text-xl">🏆</span>Challenges</a>
-    <a href="settings.html" class="quick-tile"><span class="text-xl">⚙️</span>Settings</a>
+    <a href="history.html" class="quick-tile"><span class="text-ink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.6L13 21l-2-1.6L9 21l-2.5-1.6L4.5 21V3H6Z"/><path d="M8 8h8M8 11.5h8M8 15h5"/></svg></span>History</a>
+    <a href="khata.html" class="quick-tile"><span class="text-ink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m2 12 4-3.5 3 2 4-3 3 2.2 4-2.7 2 2.5-6 5-2.2-1.7-3.6 2.7L7 13.5Z"/><path d="m6.5 8.5 4.2 5.2M17 9.5l-4 5"/></svg></span>Khata</a>
+    <a href="vault.html#challenges" class="quick-tile"><span class="text-ink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a3 3 0 0 0 3 4M17 5h3a3 3 0 0 1-3 4"/><path d="M12 14v3M9 21h6M9.5 21c0-1.8.7-2.8 2.5-3 1.8.2 2.5 1.2 2.5 3"/></svg></span>Challenges</a>
+    <a href="settings.html" class="quick-tile"><span class="text-ink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2.06 2.06 0 1 1-2.92 2.92l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V19.6a2.06 2.06 0 1 1-4.12 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2.06 2.06 0 1 1-2.92-2.92l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H4.4a2.06 2.06 0 1 1 0-4.12h.09A1.7 1.7 0 0 0 6.05 6.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2.06 2.06 0 1 1 2.92-2.92l.06.06a1.7 1.7 0 0 0 1.87.34H10.6A1.7 1.7 0 0 0 11.63 1H11.7a2.06 2.06 0 1 1 4.12 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2.06 2.06 0 1 1 2.92 2.92l-.06.06a1.7 1.7 0 0 0-.34 1.87v.06a1.7 1.7 0 0 0 1.56 1.03h.09a2.06 2.06 0 1 1 0 4.12h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/></svg></span>Settings</a>
   </section>
 
   <!-- Smart Insights -->
@@ -178,7 +182,7 @@
     <div id="feed-list" class="flex flex-col gap-3"></div>
 
     <div id="feed-empty" class="hidden text-center py-10">
-      <p class="text-4xl mb-2">🧾</p>
+      <div class="w-12 h-12 mx-auto mb-2 rounded-2xl bg-sage/15 flex items-center justify-center text-sage"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.6L13 21l-2-1.6L9 21l-2.5-1.6L4.5 21V3H6Z"/><path d="M8 8h8M8 11.5h8M8 15h5"/></svg></div>
       <p class="text-[14px] font-bold text-sage">No transactions yet. Tap + to add one.</p>
     </div>
   </section>
@@ -190,16 +194,16 @@
   <div class="sheet-overlay">
     <div class="sheet-panel">
       <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-5"></div>
-      <p class="text-2xl mb-2">📲</p>
+      <div class="w-14 h-14 mx-auto mb-2 rounded-3xl bg-crimson/10 flex items-center justify-center text-crimson"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2.5-7.5L3 11Z"/></svg></div>
       <h3 class="text-[20px] font-black mb-1">Did the payment succeed?</h3>
       <p class="text-[13px] font-bold text-sage mb-1" id="pending-desc">You scanned a QR to pay ₹0 for Food.</p>
       <p class="text-[13px] font-semibold text-ink/70 mb-6">Confirm so we can keep your Online wallet accurate.</p>
       <div class="flex gap-3">
-        <button id="pending-cancel" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">
-          ✕ Failed / Cancel
+        <button id="pending-cancel" class="flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Failed / Cancel</span>
         </button>
-        <button id="pending-confirm" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">
-          ✓ Yes, Success
+        <button id="pending-confirm" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow flex items-center justify-center gap-1.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 9.5 18 20 6"/></svg><span>Yes, Success</span>
         </button>
       </div>
       <p class="text-center text-[11px] font-bold text-sage mt-4" id="pending-remaining"></p>
