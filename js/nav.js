@@ -55,3 +55,32 @@ export function renderNav(activePage) {
     </nav>
   `;
 }
+
+/**
+ * Shared toast/snackbar. Pass { actionLabel, onAction } to show an
+ * optional action button (e.g. "Undo") for a few extra seconds.
+ */
+export function showToast(text, { actionLabel, onAction, duration } = {}) {
+  const existing = document.querySelector('.mf-toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'mf-toast';
+  if (actionLabel && onAction) {
+    el.classList.add('mf-toast-with-action');
+    const span = document.createElement('span');
+    span.textContent = text;
+    const btn = document.createElement('button');
+    btn.textContent = actionLabel;
+    btn.className = 'mf-toast-action';
+    btn.addEventListener('click', () => {
+      el.remove();
+      onAction();
+    });
+    el.appendChild(span);
+    el.appendChild(btn);
+  } else {
+    el.textContent = text;
+  }
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), duration || (actionLabel ? 5000 : 1800));
+}

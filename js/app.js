@@ -1,7 +1,7 @@
 /* ============================================================
    app.js — Dashboard (index.html) logic
    ============================================================ */
-import { renderNav } from './nav.js';
+import { renderNav, showToast } from './nav.js';
 import { initGhostToggle } from './ghost.js';
 import { setMoneyText } from './ghost.js';
 import {
@@ -16,6 +16,7 @@ import {
   getMonthlyBudget,
   getDailySafeToSpend,
   getLowBalanceThreshold,
+  getCategoryBudgetStatus,
   generateInsights,
   getFinancialHealthScore,
   getCurrentNoSpendStreak,
@@ -24,8 +25,10 @@ import {
   formatDate,
   categoryIcon,
 } from './db.js';
+import { icon } from './icons.js';
 
 renderNav('dashboard');
+window.__mfAppRendered = true;
 initGhostToggle();
 
 const feedList = document.getElementById('feed-list');
@@ -62,14 +65,27 @@ function renderChillarRow() {
   });
 }
 
-function showToast(text) {
-  const existing = document.querySelector('.mf-toast');
-  if (existing) existing.remove();
-  const el = document.createElement('div');
-  el.className = 'mf-toast';
-  el.textContent = text;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1800);
+
+async function renderCategoryBudgetAlerts() {
+  const status = await getCategoryBudgetStatus();
+  const el = document.getElementById('category-budget-alerts');
+  const overBudget = status.filter((s) => s.pct >= 80);
+  if (overBudget.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = overBudget
+    .map((s) => {
+      const crossed = s.pct >= 100;
+      return `
+      <div class="rounded-2xl ${crossed ? 'bg-crimson/10 border-crimson/30' : 'bg-crimson/5 border-crimson/15'} border px-4 py-3 flex items-center gap-3">
+        <span class="text-crimson shrink-0">${icon('alertTriangle', 16)}</span>
+        <p class="text-[12px] font-bold ${crossed ? 'text-crimson' : 'text-ink'} leading-snug">
+          ${crossed ? "You've crossed" : "You're close to"} your ${s.category} budget — ${formatINR(s.spent)} of ${formatINR(s.limit)} this month.
+        </p>
+      </div>`;
+    })
+    .join('');
 }
 
 async function renderSummary() {
@@ -93,6 +109,8 @@ async function renderSummary() {
   // Low balance alert
   const threshold = getLowBalanceThreshold();
   document.getElementById('low-balance-alert').classList.toggle('hidden', available >= threshold);
+
+  await renderCategoryBudgetAlerts();
 
   const { income, expense } = await getMonthlyIncomeExpense();
   const alertEl = document.getElementById('alert-text');
@@ -123,7 +141,7 @@ async function renderHealthAndStreak() {
   const { score, label } = await getFinancialHealthScore();
   document.getElementById('health-score').textContent = score;
   document.getElementById('health-label').textContent = label;
-  document.getElementById('streak-count').innerHTML = `${getCurrentNoSpendStreak()} <span class="text-[13px]">days 🔥</span>`;
+  document.getElementById('streak-count').innerHTML = `${getCurrentNoSpendStreak()} <span class="text-[13px]">days</span> ${icon('fire', 16)}`;
 }
 
 async function renderInsights() {
@@ -131,9 +149,10 @@ async function renderInsights() {
   const list = document.getElementById('insights-list');
   list.innerHTML = insights
     .map(
-      (text) => `
-      <div class="bg-card rounded-2xl border border-sage-soft px-4 py-3">
-        <p class="text-[13px] font-bold text-ink leading-snug">${text}</p>
+      (ins) => `
+      <div class="bg-card rounded-2xl border border-sage-soft px-4 py-3 flex items-center gap-3">
+        <div class="bento-icon shrink-0">${icon(ins.icon, 16)}</div>
+        <p class="text-[13px] font-bold text-ink leading-snug">${ins.text}</p>
       </div>`
     )
     .join('');

@@ -11,10 +11,10 @@ import {
   getAverageDailySpend,
   getAllTransactions,
   formatINR,
-  categoryIcon,
 } from './db.js';
 
 renderNav('stats');
+window.__mfAppRendered = true;
 
 const CHARCOAL = '#171e19';
 const CRIMSON = '#ca0013';
@@ -81,7 +81,7 @@ async function renderPeriodSummary() {
   const biggest = await getBiggestExpense(start, end);
   if (biggest) {
     document.getElementById('biggest-expense').textContent = formatINR(biggest.amount);
-    document.getElementById('biggest-expense-cat').textContent = `${categoryIcon(biggest.category)} ${biggest.category}`;
+    document.getElementById('biggest-expense-cat').textContent = biggest.category;
   } else {
     document.getElementById('biggest-expense').textContent = '₹0';
     document.getElementById('biggest-expense-cat').textContent = '—';
@@ -146,7 +146,7 @@ async function renderCategoryChart() {
       (e, i) => `
       <div class="flex items-center gap-2 text-[12px] font-bold">
         <span class="w-3 h-3 rounded-full shrink-0" style="background:${PALETTE[i % PALETTE.length]}"></span>
-        <span class="truncate">${categoryIcon(e[0])} ${e[0]}</span>
+        <span class="truncate">${e[0]}</span>
         <span class="ml-auto text-sage">${formatINR(e[1])}</span>
       </div>`
     )

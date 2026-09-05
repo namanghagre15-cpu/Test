@@ -3,6 +3,7 @@
    Requires the classic Dexie CDN script (window.Dexie) to have
    executed BEFORE this module runs.
    ============================================================ */
+import { categoryIconSvg } from './icons.js';
 
 export const db = new Dexie('MoneyFollowDB');
 
@@ -206,12 +207,24 @@ export async function updateTransaction(id, changes) {
 
 export async function deleteTransaction(id) {
   const tx = await db.transactions.get(id);
-  if (!tx) return;
+  if (!tx) return null;
   if (!tx.isPending) {
     if (tx.type === 'expense') await adjustWalletBalance(tx.walletType, tx.amount);
     else if (tx.type === 'income') await adjustWalletBalance(tx.walletType, -tx.amount);
   }
   await db.transactions.delete(id);
+  return tx; // returned so the caller can offer a genuine Undo
+}
+
+/** Restores a transaction previously removed by deleteTransaction(), with
+ * the same id and the same wallet-balance effect it originally had. */
+export async function undoDeleteTransaction(tx) {
+  if (!tx) return;
+  await db.transactions.put(tx);
+  if (!tx.isPending) {
+    if (tx.type === 'expense') await adjustWalletBalance(tx.walletType, -tx.amount);
+    else if (tx.type === 'income') await adjustWalletBalance(tx.walletType, tx.amount);
+  }
 }
 
 export async function searchTransactions({ query, category, type, walletType, expenseType, startDate, endDate }) {
@@ -438,6 +451,35 @@ export async function getThisWeekOutsideFoodSpend() {
 }
 
 /* ------------------------------------------------------------
+   Per-category monthly budgets (generalizes the Outside Food
+   weekly-limit idea above to any category the student picks).
+   ------------------------------------------------------------ */
+
+export function getCategoryBudgets() {
+  return getLocal('category_budgets', {});
+}
+
+export function setCategoryBudget(category, amount) {
+  const budgets = getCategoryBudgets();
+  if (amount && amount > 0) budgets[category] = amount;
+  else delete budgets[category];
+  setLocal('category_budgets', budgets);
+}
+
+export async function getCategoryBudgetStatus() {
+  const budgets = getCategoryBudgets();
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const spendByCategory = await getCategoryBreakdown(monthStart);
+  return Object.entries(budgets)
+    .map(([category, limit]) => {
+      const spent = spendByCategory[category] || 0;
+      return { category, limit, spent, pct: limit > 0 ? Math.round((spent / limit) * 100) : 0 };
+    })
+    .sort((a, b) => b.pct - a.pct);
+}
+
+/* ------------------------------------------------------------
    Smart Spending Insights (rule-based)
    ------------------------------------------------------------ */
 
@@ -449,29 +491,29 @@ export async function generateInsights() {
   const budget = getMonthlyBudget();
 
   if (income === 0 && expense === 0) {
-    insights.push('👋 Add your first pocket money entry to start tracking this month.');
+    insights.push({ icon: 'send', text: 'Add your first pocket money entry to start tracking this month.' });
     return insights;
   }
 
   if (want + need > 0) {
     const wantPct = Math.round((want / (want + need)) * 100);
     if (wantPct >= 50) {
-      insights.push(`✨ ${wantPct}% of your spending this month is on Wants — maybe park some in the Vault?`);
+      insights.push({ icon: 'sparkle', text: `${wantPct}% of your spending this month is on Wants — maybe park some in the Vault?` });
     } else {
-      insights.push(`🧠 Nice discipline — only ${wantPct}% went to Wants this month.`);
+      insights.push({ icon: 'brain', text: `Nice discipline — only ${wantPct}% went to Wants this month.` });
     }
   }
 
   const topCategory = Object.entries(breakdown).sort((a, b) => b[1] - a[1])[0];
   if (topCategory) {
-    insights.push(`📌 ${topCategory[0]} is your top spend this month at ₹${Math.round(topCategory[1])}.`);
+    insights.push({ icon: 'pin', text: `${topCategory[0]} is your top spend this month at ₹${Math.round(topCategory[1])}.` });
   }
 
   if (budget > 0) {
     const pct = Math.round((expense / budget) * 100);
-    if (pct >= 100) insights.push(`🚨 You've crossed your monthly budget (${pct}% used).`);
-    else if (pct >= 80) insights.push(`⚠️ You've used ${pct}% of your monthly budget already.`);
-    else insights.push(`✅ You're at ${pct}% of your monthly budget — good pace.`);
+    if (pct >= 100) insights.push({ icon: 'alertTriangle', text: `You've crossed your monthly budget (${pct}% used).` });
+    else if (pct >= 80) insights.push({ icon: 'alertTriangle', text: `You've used ${pct}% of your monthly budget already.` });
+    else insights.push({ icon: 'checkCircle', text: `You're at ${pct}% of your monthly budget — good pace.` });
   }
 
   return insights;
@@ -566,12 +608,15 @@ export async function getChallengeProgress() {
   const streak = getCurrentNoSpendStreak();
   const vaultLocked = await getTotalVaultLocked();
   const goals = await getVaultGoals();
+  const outsideFoodSpend = await getThisWeekOutsideFoodSpend();
+  const { income, expense } = await getMonthlyIncomeExpense();
+  const budget = getMonthlyBudget();
 
-  return [
+  const challenges = [
     {
       id: 'no_spend_day',
       title: 'No-Spend Day',
-      emoji: '🚫💸',
+      icon: 'shield',
       description: 'Log a full day with zero expenses.',
       progress: getNoSpendDays().length > 0 ? 1 : 0,
       target: 1,
@@ -580,22 +625,63 @@ export async function getChallengeProgress() {
     {
       id: 'streak_7',
       title: '7-Day No-Spend Streak',
-      emoji: '🔥',
+      icon: 'fire',
       description: 'Hit 7 consecutive no-spend days.',
       progress: Math.min(streak, 7),
       target: 7,
       complete: streak >= 7,
     },
     {
+      id: 'streak_30',
+      title: '30-Day No-Spend Streak',
+      icon: 'trophy',
+      description: 'A whole month of daily discipline.',
+      progress: Math.min(streak, 30),
+      target: 30,
+      complete: streak >= 30,
+    },
+    {
       id: 'vault_starter',
       title: 'Vault Starter',
-      emoji: '🏦',
+      icon: 'target',
       description: 'Lock away your first ₹100 in the Vault.',
       progress: Math.min(vaultLocked, 100),
       target: 100,
       complete: vaultLocked >= 100 && goals.length > 0,
     },
+    {
+      id: 'vault_saver_500',
+      title: 'Vault Saver',
+      icon: 'trophy',
+      description: 'Grow your Vault savings to ₹500.',
+      progress: Math.min(vaultLocked, 500),
+      target: 500,
+      complete: vaultLocked >= 500,
+    },
+    {
+      id: 'no_outside_food_week',
+      title: 'Home Food Week',
+      icon: 'shield',
+      description: 'A full week with zero Outside Food spending.',
+      progress: outsideFoodSpend === 0 ? 1 : 0,
+      target: 1,
+      complete: outsideFoodSpend === 0,
+    },
   ];
+
+  if (budget > 0 && (income > 0 || expense > 0)) {
+    challenges.push({
+      id: 'under_budget_month',
+      title: 'Under Budget',
+      icon: 'checkCircle',
+      description: 'Stay within your monthly budget.',
+      progress: expense <= budget ? 1 : 0,
+      target: 1,
+      complete: expense <= budget,
+    });
+  }
+
+  return challenges;
 }
 
 /* ------------------------------------------------------------
@@ -932,25 +1018,12 @@ export const CATEGORIES = [
   'Other',
 ];
 
-export const CATEGORY_ICONS = {
-  Mess: '🍛',
-  'Outside Food': '🍔',
-  Travel: '🚌',
-  Books: '📚',
-  Fun: '🎮',
-  Bills: '🧾',
-  'Semester Fees': '🎓',
-  Photostat: '🖨️',
-  'Lab Material': '🧪',
-  Rent: '🏠',
-  Health: '💊',
-  Other: '🛍️',
-  'Pocket Money': '💵',
-  'Wallet Transfer': '🔄',
-};
+// Icon set for categories now lives in icons.js (SVG line icons, not emoji).
+export { CATEGORY_ICON_NAMES } from './icons.js';
 
-export function categoryIcon(category) {
-  return CATEGORY_ICONS[category] || '💳';
+/** Returns an SVG string for a category — drop-in replacement for the old emoji map. */
+export function categoryIcon(category, size = 20) {
+  return categoryIconSvg(category, size);
 }
 
 // Time-based category suggestion (breakfast/mess in morning, travel midday, dinner at night)

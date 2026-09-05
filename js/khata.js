@@ -17,8 +17,10 @@ import {
   formatINR,
   formatDate,
 } from './db.js';
+import { icon } from './icons.js';
 
 renderNav('khata');
+window.__mfAppRendered = true;
 
 /* ---------------- Tabs ---------------- */
 const tabLedger = document.getElementById('tab-ledger');
@@ -106,14 +108,14 @@ async function renderLedgerList() {
     item.className = `bg-card rounded-3xl border ${e.settled ? 'border-sage-soft opacity-60' : 'border-sage-soft'} p-4`;
     item.innerHTML = `
       <div class="flex items-center justify-between mb-2">
-        <p class="text-[15px] font-black">${isOweMe ? '🤲' : '💳'} ${e.personName}</p>
+        <p class="text-[15px] font-black flex items-center gap-2"><span class="${isOweMe ? 'text-charcoal' : 'text-crimson'}">${icon(isOweMe ? 'arrowDown' : 'card', 16)}</span> ${e.personName}</p>
         <p class="text-[15px] font-black ${isOweMe ? 'text-charcoal' : 'text-crimson'}">${formatINR(e.amount)}</p>
       </div>
       <p class="text-[11px] font-bold text-sage mb-3">${isOweMe ? 'Owes me' : 'I owe'} · ${formatDate(e.date)}${e.note ? ' · ' + e.note : ''}${e.settled ? ' · Settled ✓' : ''}</p>
       <div class="flex gap-2">
-        ${!e.settled ? `<button data-settle="${e.id}" class="flex-1 py-2 rounded-xl bg-charcoal text-white font-black text-[11px]">✓ Mark Settled</button>` : ''}
-        ${isOweMe && !e.settled ? `<button data-remind="${e.id}" class="flex-1 py-2 rounded-xl bg-green-600/10 text-green-700 font-black text-[11px]">💬 WhatsApp Reminder</button>` : ''}
-        <button data-delete-ledger="${e.id}" class="py-2 px-3 rounded-xl bg-crimson/10 text-crimson font-black text-[11px]">🗑️</button>
+        ${!e.settled ? `<button data-settle="${e.id}" class="flex-1 py-2 rounded-xl bg-charcoal text-white font-black text-[11px] flex items-center justify-center gap-1.5">${icon('check', 13)} Mark Settled</button>` : ''}
+        ${isOweMe && !e.settled ? `<button data-remind="${e.id}" class="flex-1 py-2 rounded-xl bg-green-600/10 text-green-700 font-black text-[11px] flex items-center justify-center gap-1.5">${icon('chat', 13)} WhatsApp Reminder</button>` : ''}
+        <button data-delete-ledger="${e.id}" class="py-2 px-3 rounded-xl bg-crimson/10 text-crimson font-black text-[11px] flex items-center justify-center">${icon('trash', 14)}</button>
       </div>
     `;
     list.appendChild(item);
@@ -163,27 +165,71 @@ document.querySelectorAll('.split-payer-btn').forEach((btn) => {
 renderPayerButtons();
 
 function parseParticipants() {
-  const raw = document.getElementById('split-participants').value;
-  return raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((name) => ({ name }));
+  return splitPeople.slice();
 }
+
+function renderPeopleChips() {
+  const list = document.getElementById('split-people-list');
+  const countBadge = document.getElementById('split-people-count');
+  countBadge.textContent = `${splitPeople.length} ${splitPeople.length === 1 ? 'person' : 'people'}`;
+  list.innerHTML = splitPeople
+    .map(
+      (p, i) => `
+      <span class="inline-flex items-center gap-1.5 bg-sage/15 rounded-full pl-3 pr-1.5 py-1.5 text-[12px] font-bold text-ink">
+        ${p.name}
+        <button type="button" data-remove-person="${i}" aria-label="Remove ${p.name}"
+          class="w-5 h-5 rounded-full bg-crimson/15 text-crimson flex items-center justify-center">${icon('close', 11)}</button>
+      </span>`
+    )
+    .join('');
+  list.querySelectorAll('[data-remove-person]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      splitPeople.splice(Number(btn.dataset.removePerson), 1);
+      renderPeopleChips();
+      updateSplitPreview();
+    });
+  });
+}
+
+let splitPeople = [];
+const splitPersonInput = document.getElementById('split-person-input');
+
+function addSplitPerson(name) {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  if (splitPeople.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) return;
+  splitPeople.push({ name: trimmed });
+  renderPeopleChips();
+  updateSplitPreview();
+}
+
+document.getElementById('split-add-person-btn').innerHTML = icon('plus', 20);
+document.getElementById('split-add-person-btn').addEventListener('click', () => {
+  addSplitPerson(splitPersonInput.value);
+  splitPersonInput.value = '';
+  splitPersonInput.focus();
+});
+splitPersonInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addSplitPerson(splitPersonInput.value);
+    splitPersonInput.value = '';
+  }
+});
+document.getElementById('split-add-me-btn').addEventListener('click', () => addSplitPerson('Me'));
 
 function updateSplitPreview() {
   const total = parseFloat(document.getElementById('split-total').value) || 0;
   const participants = parseParticipants();
   const preview = document.getElementById('split-preview');
   if (participants.length === 0 || total <= 0) {
-    preview.textContent = 'Enter names to see the per-person share.';
+    preview.textContent = 'Add at least 2 people to see the per-person share.';
     return;
   }
   const share = Math.round((total / participants.length) * 100) / 100;
   preview.textContent = `${formatINR(share)} per person × ${participants.length} people`;
 }
 document.getElementById('split-total').addEventListener('input', updateSplitPreview);
-document.getElementById('split-participants').addEventListener('input', updateSplitPreview);
 
 document.getElementById('save-split-btn').addEventListener('click', async () => {
   const title = document.getElementById('split-title').value.trim();
@@ -212,7 +258,8 @@ document.getElementById('save-split-btn').addEventListener('click', async () => 
 
   document.getElementById('split-title').value = '';
   document.getElementById('split-total').value = '';
-  document.getElementById('split-participants').value = '';
+  splitPeople = [];
+  renderPeopleChips();
   updateSplitPreview();
   await renderEverything();
 });

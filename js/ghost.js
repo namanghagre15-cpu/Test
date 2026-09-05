@@ -5,6 +5,7 @@
    every amount on the current page instantly.
    ============================================================ */
 import { getLocal, setLocal } from './db.js';
+import { icon } from './icons.js';
 
 const tracked = new Set();
 
@@ -47,7 +48,7 @@ export function toggleGhostMode() {
 export function updateGhostToggleIcon() {
   const btn = document.getElementById('ghost-toggle-btn');
   if (!btn) return;
-  btn.textContent = isGhostMode() ? '🙈' : '👁️';
+  btn.innerHTML = isGhostMode() ? icon('eyeOff', 18) : icon('eye', 18);
   btn.setAttribute('aria-pressed', isGhostMode() ? 'true' : 'false');
 }
 

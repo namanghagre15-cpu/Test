@@ -13,6 +13,8 @@ import {
   isWebAuthnSupported,
   hasBiometricRegistered,
   registerBiometric,
+  getAutoLockMinutes,
+  setAutoLockMinutes,
 } from './lock.js';
 import {
   getMonthlyBudget,
@@ -22,6 +24,9 @@ import {
   getOutsideFoodWeeklyLimit,
   setOutsideFoodWeeklyLimit,
   getThisWeekOutsideFoodSpend,
+  getCategoryBudgets,
+  setCategoryBudget,
+  getCategoryBudgetStatus,
   getRecurringList,
   addRecurring,
   deleteRecurring,
@@ -37,8 +42,10 @@ import {
   getAllTransactions,
   formatINR,
 } from './db.js';
+import { icon } from './icons.js';
 
 renderNav('settings');
+window.__mfAppRendered = true;
 
 /* ---------------- Appearance switches ---------------- */
 
@@ -74,6 +81,12 @@ function refreshSecurityUI() {
   }
 }
 refreshSecurityUI();
+
+const autoLockSelect = document.getElementById('auto-lock-select');
+autoLockSelect.value = String(getAutoLockMinutes());
+autoLockSelect.addEventListener('change', () => {
+  setAutoLockMinutes(Number(autoLockSelect.value));
+});
 
 const pinModal = document.getElementById('pin-modal');
 const pinModalTitle = document.getElementById('pin-modal-title');
@@ -196,13 +209,60 @@ document.getElementById('save-budget-btn').addEventListener('click', async () =>
   alert('Saved!');
 });
 
+/* ---------------- Per-category budgets ---------------- */
+
+const catBudgetCategorySelect = document.getElementById('cat-budget-category');
+CATEGORIES.forEach((cat) => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  catBudgetCategorySelect.appendChild(opt);
+});
+
+async function renderCategoryBudgets() {
+  const status = await getCategoryBudgetStatus();
+  const list = document.getElementById('category-budget-list');
+  if (status.length === 0) {
+    list.innerHTML = '<p class="text-[11px] font-bold text-sage">No category budgets set yet.</p>';
+    return;
+  }
+  list.innerHTML = status
+    .map(
+      (s) => `
+      <div class="flex items-center justify-between bg-sage/10 rounded-2xl px-4 py-3">
+        <div class="min-w-0">
+          <p class="text-[12px] font-black truncate">${s.category}</p>
+          <p class="text-[10px] font-bold ${s.pct >= 100 ? 'text-crimson' : 'text-sage'}">${formatINR(s.spent)} / ${formatINR(s.limit)} this month (${s.pct}%)</p>
+        </div>
+        <button data-remove-cat-budget="${s.category}" class="w-8 h-8 rounded-full bg-crimson/10 text-crimson flex items-center justify-center shrink-0">${icon('trash', 13)}</button>
+      </div>`
+    )
+    .join('');
+  list.querySelectorAll('[data-remove-cat-budget]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      setCategoryBudget(btn.dataset.removeCatBudget, 0);
+      await renderCategoryBudgets();
+    });
+  });
+}
+renderCategoryBudgets();
+
+document.getElementById('cat-budget-add-btn').addEventListener('click', async () => {
+  const category = catBudgetCategorySelect.value;
+  const amount = parseFloat(document.getElementById('cat-budget-amount').value) || 0;
+  if (amount <= 0) return;
+  setCategoryBudget(category, amount);
+  document.getElementById('cat-budget-amount').value = '';
+  await renderCategoryBudgets();
+});
+
 /* ---------------- Recurring Expenses ---------------- */
 
 const recurringCategorySelect = document.getElementById('recurring-category');
 CATEGORIES.forEach((cat) => {
   const opt = document.createElement('option');
   opt.value = cat;
-  opt.textContent = `${categoryIcon(cat)} ${cat}`;
+  opt.textContent = cat;
   recurringCategorySelect.appendChild(opt);
 });
 
@@ -236,7 +296,7 @@ async function renderRecurringList() {
         <p class="text-[10px] font-bold text-sage">${formatINR(r.amount)} · ${r.frequency} · next ${new Date(r.nextDueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
       </div>
       <button data-toggle-recurring="${r.id}" data-active="${r.active}" class="mf-switch ${r.active ? 'on' : ''}"><span class="knob"></span></button>
-      <button data-delete-recurring="${r.id}" class="text-[13px]">🗑️</button>
+      <button data-delete-recurring="${r.id}" class="w-8 h-8 rounded-full bg-crimson/10 text-crimson flex items-center justify-center shrink-0">${icon('trash', 14)}</button>
     `;
     list.appendChild(row);
   });
@@ -429,7 +489,7 @@ async function renderArchiveList() {
     row.innerHTML = `
       <div class="flex items-center justify-between mb-1">
         <p class="text-[13px] font-black">${a.label}</p>
-        <button data-delete-archive="${a.id}" class="text-[12px]">🗑️</button>
+        <button data-delete-archive="${a.id}" class="w-7 h-7 rounded-full bg-crimson/10 text-crimson flex items-center justify-center shrink-0">${icon('trash', 13)}</button>
       </div>
       <p class="text-[11px] font-bold text-sage">${new Date(a.createdDate).toLocaleDateString('en-IN')} · ${a.snapshot.transactionCount} transactions</p>
       <p class="text-[11px] font-bold text-sage">Income ${formatINR(a.snapshot.income)} · Expense ${formatINR(a.snapshot.expense)}</p>

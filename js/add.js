@@ -18,6 +18,7 @@ import {
 } from './db.js';
 
 renderNav('add');
+window.__mfAppRendered = true;
 
 let selectedCategory = suggestCategoryByTime();
 let selectedExpenseType = 'need';
@@ -94,6 +95,12 @@ renderWalletTypeButtons();
 
 function renderAmount() {
   amountDisplay.textContent = amountStr;
+  // Auto-shrink the font size as the number gets longer so a big amount
+  // always stays on one line and inside its card instead of overflowing
+  // past the edge (previously fixed at 36px regardless of length).
+  const len = amountStr.length;
+  const size = len <= 6 ? 36 : Math.max(20, 36 - (len - 6) * 2.2);
+  amountDisplay.style.fontSize = size + 'px';
 }
 
 document.querySelectorAll('.numpad-btn').forEach((btn) => {
@@ -290,11 +297,13 @@ document.getElementById('manual-upi-continue-btn').addEventListener('click', () 
 document.getElementById('qr-confirm-cancel').addEventListener('click', () => {
   scanModal.classList.add('hidden');
   stopCamera();
+  decodedPayee = { pa: '', pn: '', am: '' };
 });
 
 document.getElementById('scan-close-btn').addEventListener('click', () => {
   scanModal.classList.add('hidden');
   stopCamera();
+  decodedPayee = { pa: '', pn: '', am: '' };
 });
 
 document.getElementById('qr-confirm-pay').addEventListener('click', async () => {
@@ -309,18 +318,23 @@ document.getElementById('qr-confirm-pay').addEventListener('click', async () => 
   // Save locally first as Pending — this is the real Pending UPI Recovery
   // workflow: we cannot know the bank-transfer result from a web page, so
   // we mark it pending and let the dashboard reconcile it afterwards.
+  // Privacy: we only ever keep the payee's display name in this note, never
+  // the scanned VPA/UPI ID itself — that value lives only in memory for the
+  // few seconds needed to build the payment link below, and is cleared right
+  // after. Nothing about who you paid is written to any settings or backup.
   await addExpense({
     amount: finalAmount,
     category: selectedCategory,
     walletType: 'online',
     expenseType: selectedExpenseType,
-    note: noteInput.value.trim() || `UPI: ${decodedPayee.pn || decodedPayee.pa}`,
+    note: noteInput.value.trim() || `UPI payment to ${decodedPayee.pn || 'merchant'}`,
     isPending: true,
   });
 
   showView(pendingView);
 
-  // Build a genuine UPI deep link and hand off to the OS / installed UPI apps.
+  // Build a genuine UPI deep link — every scanned/entered detail (payee VPA,
+  // name, amount, note) is handed straight to the phone's UPI app chooser.
   const upiUrl = `upi://pay?pa=${encodeURIComponent(decodedPayee.pa)}&pn=${encodeURIComponent(
     decodedPayee.pn || 'Merchant'
   )}&am=${finalAmount}&cu=INR&tn=${encodeURIComponent(noteInput.value.trim() || selectedCategory)}`;
@@ -332,6 +346,10 @@ document.getElementById('qr-confirm-pay').addEventListener('click', async () => 
   setTimeout(() => {
     window.location.href = 'index.html';
   }, 2200);
+
+  // Clear the in-memory payee details now that the handoff is done — this
+  // app never persists a "recent payees" or UPI-ID list anywhere.
+  decodedPayee = { pa: '', pn: '', am: '' };
 });
 
 // Make sure the camera is always released if the user navigates away.

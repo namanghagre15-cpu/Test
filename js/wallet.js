@@ -4,8 +4,10 @@
 import { renderNav } from './nav.js';
 import { initGhostToggle, setMoneyText } from './ghost.js';
 import { getWallets, addIncome, transferBetweenWallets, getAllTransactions, formatINR, formatDate } from './db.js';
+import { icon } from './icons.js';
 
 renderNav('wallet');
+window.__mfAppRendered = true;
 initGhostToggle();
 
 let selectedWalletType = 'cash';
@@ -96,7 +98,7 @@ async function renderHistory() {
     const item = document.createElement('div');
     item.className = 'bg-card rounded-3xl border border-sage-soft p-3 flex items-center gap-3';
     item.innerHTML = `
-      <div class="feed-icon bg-crimson/10">${isIncome ? '💵' : '🔄'}</div>
+      <div class="feed-icon bg-crimson/10">${isIncome ? icon('cash', 22) : icon('repeat', 22)}</div>
       <div class="flex-1 min-w-0">
         <p class="text-[16px] font-black leading-tight truncate">${isIncome ? t.note || 'Pocket Money' : t.note}</p>
         <p class="text-[12px] font-bold text-sage">${formatDate(t.date)} · ${t.walletType === 'cash' ? 'Cash' : 'Online'}</p>

@@ -1,19 +1,22 @@
 /* ============================================================
    history.js — Transaction History: search, filter, edit, delete
    ============================================================ */
-import { renderNav } from './nav.js';
+import { renderNav, showToast } from './nav.js';
 import { initGhostToggle, setMoneyText } from './ghost.js';
 import {
   searchTransactions,
   updateTransaction,
   deleteTransaction,
+  undoDeleteTransaction,
   CATEGORIES,
   categoryIcon,
   formatINR,
   formatDate,
 } from './db.js';
+import { icon } from './icons.js';
 
 renderNav('history');
+window.__mfAppRendered = true;
 initGhostToggle();
 
 const listEl = document.getElementById('history-list');
@@ -31,7 +34,7 @@ const filterExpenseType = document.getElementById('filter-expense-type');
   CATEGORIES.forEach((cat) => {
     const opt = document.createElement('option');
     opt.value = cat;
-    opt.textContent = `${categoryIcon(cat)} ${cat}`;
+    opt.textContent = cat;
     sel.appendChild(opt);
   });
 });
@@ -88,8 +91,8 @@ function renderList() {
       ${
         t.type !== 'transfer'
           ? `<div class="flex gap-2 mt-2 pt-2 border-t border-sage-soft/60">
-        <button data-edit="${t.id}" class="flex-1 py-2 rounded-xl bg-sage/10 font-black text-[11px]">✏️ Edit</button>
-        <button data-delete="${t.id}" class="flex-1 py-2 rounded-xl bg-crimson/10 text-crimson font-black text-[11px]">🗑️ Delete</button>
+        <button data-edit="${t.id}" class="flex-1 py-2 rounded-xl bg-sage/10 font-black text-[11px] flex items-center justify-center gap-1.5">${icon('edit', 13)} Edit</button>
+        <button data-delete="${t.id}" class="flex-1 py-2 rounded-xl bg-crimson/10 text-crimson font-black text-[11px] flex items-center justify-center gap-1.5">${icon('trash', 13)} Delete</button>
       </div>`
           : ''
       }
@@ -103,9 +106,17 @@ function renderList() {
   });
   listEl.querySelectorAll('[data-delete]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this transaction? Wallet balance will be adjusted accordingly.')) {
-        await deleteTransaction(Number(btn.dataset.delete));
-        await runSearch();
+      const id = Number(btn.dataset.delete);
+      const removed = await deleteTransaction(id);
+      await runSearch();
+      if (removed) {
+        showToast('Transaction deleted', {
+          actionLabel: 'Undo',
+          onAction: async () => {
+            await undoDeleteTransaction(removed);
+            await runSearch();
+          },
+        });
       }
     });
   });

@@ -20,8 +20,10 @@ import {
   markTodayNoSpend,
   formatINR,
 } from './db.js';
+import { icon } from './icons.js';
 
 renderNav('vault');
+window.__mfAppRendered = true;
 initGhostToggle();
 
 const goalsList = document.getElementById('goals-list');
@@ -56,17 +58,17 @@ async function renderAll() {
     card.innerHTML = `
       <div class="flex items-start justify-between mb-3">
         <div>
-          <h3 class="text-[18px] font-black leading-tight">${g.isEmergency ? '🚑 ' : ''}${g.title}</h3>
-          ${deadlineLabel ? `<p class="text-[11px] font-bold text-sage mt-0.5">🎯 by ${deadlineLabel}</p>` : ''}
+          <h3 class="text-[18px] font-black leading-tight flex items-center gap-1.5">${g.isEmergency ? `<span class="text-crimson">${icon('shield', 16)}</span>` : ''}${g.title}</h3>
+          ${deadlineLabel ? `<p class="text-[11px] font-bold text-sage mt-0.5 flex items-center gap-1">${icon('target', 12)} by ${deadlineLabel}</p>` : ''}
           ${g.isEmergency ? '<p class="text-[11px] font-bold text-sage mt-0.5">Open-ended reserve for unexpected expenses</p>' : ''}
         </div>
-        ${g.isEmergency ? '' : `<button data-delete-goal="${g.id}" class="w-9 h-9 rounded-full bg-sage/15 flex items-center justify-center text-sm">🗑️</button>`}
+        ${g.isEmergency ? '' : `<button data-delete-goal="${g.id}" class="w-9 h-9 rounded-full bg-sage/15 flex items-center justify-center text-sage">${icon('trash', 15)}</button>`}
       </div>
 
       <div class="flex items-baseline gap-2 mb-2">
         <span class="text-[20px] font-black mf-amt" data-goal-saved="${g.id}">${formatINR(g.savedAmount)}</span>
         ${hasTarget ? `<span class="text-[13px] font-bold text-sage">/ ${formatINR(g.targetAmount)}</span>` : ''}
-        ${isComplete ? '<span class="ml-auto text-[11px] font-black text-crimson">🎉 Goal reached!</span>' : ''}
+        ${isComplete ? `<span class="ml-auto text-[11px] font-black text-crimson flex items-center gap-1">${icon('trophy', 13)} Goal reached!</span>` : ''}
       </div>
 
       ${hasTarget ? `<div class="progress-track mb-4"><div class="progress-fill" style="width:${pct}%"></div></div>` : '<div class="mb-4"></div>'}
@@ -109,15 +111,15 @@ async function renderChallenges() {
       const pct = Math.min(100, Math.round((c.progress / c.target) * 100));
       const noSpendExtra =
         c.id === 'no_spend_day'
-          ? `<button id="mark-no-spend-btn" class="mt-3 w-full py-2.5 rounded-2xl ${canMark ? 'bg-charcoal text-white' : 'bg-sage/20 text-sage'} font-black text-[12px]" ${canMark ? '' : 'disabled'}>
-               ${canMark ? '✅ Mark Today as No-Spend' : c.complete ? 'Already logged a No-Spend day' : 'You already spent today'}
+          ? `<button id="mark-no-spend-btn" class="mt-3 w-full py-2.5 rounded-2xl ${canMark ? 'bg-charcoal text-white' : 'bg-sage/20 text-sage'} font-black text-[12px] flex items-center justify-center gap-1.5" ${canMark ? '' : 'disabled'}>
+               ${canMark ? `${icon('checkCircle', 15)} Mark Today as No-Spend` : c.complete ? 'Already logged a No-Spend day' : 'You already spent today'}
              </button>`
           : '';
       return `
       <div class="bg-card rounded-3xl border ${c.complete ? 'border-crimson/40' : 'border-sage-soft'} p-4">
         <div class="flex items-center justify-between mb-2">
-          <p class="text-[14px] font-black">${c.emoji} ${c.title}</p>
-          ${c.complete ? '<span class="text-[11px] font-black text-crimson">✓ Done</span>' : ''}
+          <p class="text-[14px] font-black flex items-center gap-2"><span class="text-crimson">${icon(c.icon, 16)}</span> ${c.title}</p>
+          ${c.complete ? `<span class="text-[11px] font-black text-crimson flex items-center gap-1">${icon('check', 11)} Done</span>` : ''}
         </div>
         <p class="text-[12px] font-bold text-sage mb-3">${c.description}</p>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
