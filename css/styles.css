@@ -365,3 +365,318 @@ body {
   background: #fff; transition: transform 0.15s ease;
 }
 .mf-switch.on .knob { transform: translateX(20px); }
+
+/* ============================================================
+   Adaptive Layout System — Mobile / Tablet / Laptop / Desktop
+   The original mobile UI remains the baseline. Larger screens
+   intentionally change navigation, spacing and content width.
+   ============================================================ */
+
+:root {
+  --mf-sidebar-width: 248px;
+  --mf-content-max: 1480px;
+  --mf-topbar-height: 68px;
+}
+
+html { min-width: 320px; }
+body { min-height: 100vh; overflow-x: hidden; }
+
+/* Shared adaptive navigation containers */
+.mf-desktop-sidebar,
+.mf-tablet-nav { display: none; }
+
+/* Keep the mobile canvas compact and comfortable. */
+.page-shell {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  /* Tablet: wider canvas + compact top navigation */
+  .page-shell {
+    max-width: 1120px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+    padding-top: 76px;
+    padding-bottom: 40px;
+  }
+
+  .page-shell > header {
+    padding-top: 24px !important;
+  }
+
+  .mf-tablet-nav {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(calc(100% - 32px), 1060px);
+    height: 58px;
+    padding: 6px;
+    z-index: 80;
+    background: color-mix(in srgb, var(--color-card) 92%, transparent);
+    border: 1px solid rgba(183,198,194,.28);
+    border-radius: 22px;
+    box-shadow: 0 14px 40px rgba(0,0,0,.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .mf-tablet-nav .mf-tablet-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px 0 8px;
+    margin-right: 2px;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .mf-tablet-nav .mf-tablet-brand img { width: 30px; height: 30px; }
+
+  .mf-tablet-link {
+    min-width: 72px;
+    height: 44px;
+    padding: 0 12px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--color-ink-soft);
+    font-size: 11px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: .18s ease;
+  }
+  .mf-tablet-link svg { width: 17px; height: 17px; }
+  .mf-tablet-link.active {
+    color: var(--color-ink);
+    background: var(--color-sage-tint);
+  }
+  .mf-tablet-link.mf-tablet-add {
+    color: #fff;
+    background: #ca0013;
+    box-shadow: 0 8px 22px rgba(202,0,19,.24);
+  }
+
+  .bottom-nav-pill { display: none !important; }
+  #mf-ai-fab { bottom: 20px; }
+
+  /* Tablet content rhythm */
+  .page-shell > section,
+  .page-shell > div:not(#bottom-nav) { box-sizing: border-box; }
+
+  body[data-page="dashboard"] .page-shell > section.bg-card,
+  body[data-page="dashboard"] .page-shell > section.relative { margin-bottom: 20px; }
+
+  body[data-page="dashboard"] .page-shell > section.relative {
+    padding: 28px;
+  }
+
+  body[data-page="dashboard"] .page-shell > section.grid.grid-cols-2 {
+    gap: 16px;
+  }
+
+  body[data-page="dashboard"] .page-shell > section.grid.grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 12px;
+  }
+
+  /* Tablet settings: split the long page into two columns. */
+  body[data-page="settings"] .page-shell > section {
+    width: 100%;
+  }
+
+  body[data-page="settings"] .page-shell > section.bg-card,
+  body[data-page="settings"] .page-shell > section.border {
+    margin-bottom: 18px;
+  }
+
+  /* History / Khata / Wallet / Vault become wider reading surfaces. */
+  body[data-page="history"] .page-shell,
+  body[data-page="khata"] .page-shell,
+  body[data-page="wallet"] .page-shell,
+  body[data-page="vault"] .page-shell,
+  body[data-page="stats"] .page-shell {
+    max-width: 1180px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  /* Laptop + desktop: permanent application sidebar */
+  .page-shell {
+    max-width: var(--mf-content-max) !important;
+    margin-left: calc(var(--mf-sidebar-width) + 24px) !important;
+    margin-right: 24px !important;
+    padding: 0 28px 44px !important;
+    min-height: 100vh;
+  }
+
+  .page-shell > header {
+    padding-top: 30px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .mf-desktop-sidebar {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    top: 18px;
+    left: 18px;
+    bottom: 18px;
+    width: var(--mf-sidebar-width);
+    z-index: 90;
+    padding: 18px 14px;
+    background: var(--color-card);
+    border: 1px solid rgba(183,198,194,.28);
+    border-radius: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.08);
+  }
+
+  .mf-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 5px 10px 18px;
+    margin-bottom: 8px;
+  }
+  .mf-sidebar-brand img { width: 38px; height: 38px; }
+  .mf-sidebar-brand strong { font-size: 16px; font-weight: 1000; letter-spacing: -.02em; }
+  .mf-sidebar-brand span { display: block; font-size: 9px; font-weight: 900; color: var(--color-ink-soft); letter-spacing: .12em; text-transform: uppercase; margin-top: 1px; }
+
+  .mf-sidebar-label {
+    padding: 10px 12px 7px;
+    color: var(--color-ink-soft);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .mf-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 46px;
+    padding: 0 12px;
+    margin: 2px 0;
+    border-radius: 15px;
+    color: var(--color-ink-soft);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 900;
+    transition: background .16s ease, color .16s ease, transform .16s ease;
+  }
+  .mf-sidebar-link svg { width: 19px; height: 19px; flex: 0 0 auto; }
+  .mf-sidebar-link:hover { background: var(--color-sage-tint); color: var(--color-ink); transform: translateX(2px); }
+  .mf-sidebar-link.active { background: #171e19; color: #fff; }
+  [data-theme='dark'] .mf-sidebar-link.active { background: #ca0013; }
+  .mf-sidebar-link.add-link { margin-top: 7px; background: #ca0013; color: #fff; box-shadow: 0 10px 24px rgba(202,0,19,.2); }
+
+  .mf-sidebar-spacer { flex: 1; }
+  .mf-sidebar-footer { padding-top: 10px; border-top: 1px solid rgba(183,198,194,.2); }
+
+  .mf-tablet-nav { display: none !important; }
+  .bottom-nav-pill { display: none !important; }
+
+  /* Desktop dashboard: structured two-column workspace. */
+  body[data-page="dashboard"] .page-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, .85fr);
+    grid-template-areas:
+      "header header"
+      "alerts alerts"
+      "hero health"
+      "hero cash"
+      "quick quick"
+      "insights insights"
+      "chillar chillar"
+      "feed feed";
+    column-gap: 22px;
+    row-gap: 0;
+    align-content: start;
+  }
+  body[data-page="dashboard"] .page-shell > header { grid-area: header; }
+  body[data-page="dashboard"] .page-shell > #low-balance-alert,
+  body[data-page="dashboard"] .page-shell > #category-budget-alerts,
+  body[data-page="dashboard"] .page-shell > #recurring-suggestions { grid-area: alerts; }
+  body[data-page="dashboard"] .page-shell > section.relative { grid-area: hero; margin-bottom: 22px; }
+  body[data-page="dashboard"] .page-shell > section.grid.grid-cols-2:nth-of-type(2) { grid-area: health; margin-bottom: 14px; }
+  body[data-page="dashboard"] .page-shell > section.grid.grid-cols-2:nth-of-type(3) { grid-area: cash; margin-bottom: 22px; }
+  body[data-page="dashboard"] .page-shell > section.grid.grid-cols-4 { grid-area: quick; }
+  body[data-page="dashboard"] .page-shell > section#insights-section { grid-area: insights; }
+  body[data-page="dashboard"] .page-shell > section:nth-of-type(6) { grid-area: chillar; }
+  body[data-page="dashboard"] .page-shell > section:nth-of-type(7) { grid-area: feed; }
+  body[data-page="dashboard"] .page-shell > #bottom-nav { grid-area: feed; }
+  body[data-page="dashboard"] .page-shell > section.grid.grid-cols-2 { gap: 14px; }
+  body[data-page="dashboard"] .page-shell > section.grid.grid-cols-4 { margin-bottom: 22px; }
+
+  /* Desktop settings becomes a real two-column settings workspace. */
+  body[data-page="settings"] .page-shell {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    align-content: start;
+  }
+  body[data-page="settings"] .page-shell > header,
+  body[data-page="settings"] .page-shell > #bottom-nav,
+  body[data-page="settings"] .page-shell > .flex.flex-col.items-center { grid-column: 1 / -1; }
+  body[data-page="settings"] .page-shell > section { margin-bottom: 0 !important; height: fit-content; }
+
+  /* Wide transaction surfaces. */
+  body[data-page="history"] .page-shell,
+  body[data-page="khata"] .page-shell,
+  body[data-page="stats"] .page-shell,
+  body[data-page="wallet"] .page-shell,
+  body[data-page="vault"] .page-shell { max-width: 1380px !important; }
+
+  body[data-page="history"] .page-shell > main,
+  body[data-page="khata"] .page-shell > main { width: 100%; }
+
+  /* Desktop cards get slightly larger breathing room. */
+  .bg-card.rounded-4xl,
+  .bg-card.rounded-3xl { box-shadow: 0 18px 50px rgba(0,0,0,.055); }
+
+  #mf-ai-panel {
+    left: auto;
+    right: 28px;
+    bottom: 28px;
+    width: min(460px, calc(100vw - var(--mf-sidebar-width) - 80px));
+    max-width: none;
+    height: min(720px, 78vh);
+    border-radius: 26px;
+  }
+}
+
+@media (min-width: 1600px) {
+  :root { --mf-sidebar-width: 264px; }
+  .page-shell { margin-left: calc(var(--mf-sidebar-width) + 32px) !important; margin-right: 32px !important; padding-left: 40px !important; padding-right: 40px !important; }
+  .mf-desktop-sidebar { width: var(--mf-sidebar-width); }
+  body[data-page="dashboard"] .page-shell { grid-template-columns: minmax(0, 1.7fr) minmax(360px, .8fr); column-gap: 28px; }
+}
+
+/* Small landscape tablets: avoid oversized vertical gaps. */
+@media (min-width: 768px) and (max-width: 1199px) and (orientation: landscape) {
+  .page-shell { padding-top: 70px; }
+  .page-shell > header { padding-bottom: 18px !important; }
+  .mf-tablet-nav { height: 54px; }
+  .mf-tablet-link { height: 40px; }
+}
+
+/* Touch target and form comfort on larger screens. */
+@media (min-width: 768px) {
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  .numpad-btn { min-height: 62px; }
+}
+
+/* Respect reduced motion across all form factors. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+}
