@@ -32,6 +32,7 @@ function injectUI() {
   const panel = document.createElement('div');
   panel.id = 'mf-ai-panel';
   panel.className = 'hidden';
+  panel.hidden = true;
   panel.innerHTML = `
     <div class="mf-ai-header">
       <div class="flex items-center gap-2">
@@ -56,7 +57,7 @@ function injectUI() {
   document.body.appendChild(panel);
 
   fab.addEventListener('click', () => openPanel());
-  document.getElementById('mf-ai-close').addEventListener('click', () => panel.classList.add('hidden'));
+  document.getElementById('mf-ai-close').addEventListener('click', () => { panel.classList.add('hidden'); panel.hidden = true; });
   document.getElementById('mf-ai-clear').addEventListener('click', async () => {
     await clearChatHistory();
     renderMessages([]);
@@ -70,6 +71,7 @@ function injectUI() {
 async function openPanel() {
   const panel = document.getElementById('mf-ai-panel');
   panel.classList.remove('hidden');
+  panel.hidden = false;
   const configured = isAIConfigured();
   document.getElementById('mf-ai-setup').classList.toggle('hidden', configured);
   document.getElementById('mf-ai-inputrow').classList.toggle('hidden', !configured);
