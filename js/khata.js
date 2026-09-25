@@ -12,8 +12,11 @@ import {
   markLedgerSettled,
   deleteLedgerEntry,
   buildWhatsAppReminderLink,
+  buildPaymentRequestLink,
+  getUserUpiId,
   addSplit,
   getSplits,
+  getGroupBalances,
   formatINR,
   formatDate,
 } from './db.js';
@@ -25,21 +28,47 @@ window.__mfAppRendered = true;
 /* ---------------- Tabs ---------------- */
 const tabLedger = document.getElementById('tab-ledger');
 const tabSplit = document.getElementById('tab-split');
+const tabBalances = document.getElementById('tab-balances');
 const ledgerSection = document.getElementById('ledger-section');
 const splitSection = document.getElementById('split-section');
+const balancesSection = document.getElementById('balances-section');
 
-tabLedger.addEventListener('click', () => {
-  tabLedger.classList.add('active');
-  tabSplit.classList.remove('active');
-  ledgerSection.classList.remove('hidden');
-  splitSection.classList.add('hidden');
+function activateTab(tab) {
+  [tabLedger, tabSplit, tabBalances].forEach((t) => t.classList.toggle('active', t === tab));
+  ledgerSection.classList.toggle('hidden', tab !== tabLedger);
+  splitSection.classList.toggle('hidden', tab !== tabSplit);
+  balancesSection.classList.toggle('hidden', tab !== tabBalances);
+}
+tabLedger.addEventListener('click', () => activateTab(tabLedger));
+tabSplit.addEventListener('click', () => activateTab(tabSplit));
+tabBalances.addEventListener('click', () => {
+  activateTab(tabBalances);
+  renderBalances();
 });
-tabSplit.addEventListener('click', () => {
-  tabSplit.classList.add('active');
-  tabLedger.classList.remove('active');
-  splitSection.classList.remove('hidden');
-  ledgerSection.classList.add('hidden');
-});
+
+async function renderBalances() {
+  const balances = await getGroupBalances();
+  const list = document.getElementById('balances-list');
+  const empty = document.getElementById('balances-empty');
+  if (balances.length === 0) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = balances
+    .map((b) => {
+      const theyOweMe = b.netAmount > 0;
+      return `
+      <div class="flex items-center justify-between bg-sage/10 rounded-2xl px-4 py-3">
+        <p class="text-[13px] font-black">${b.personName}</p>
+        <p class="text-[13px] font-black ${theyOweMe ? 'text-charcoal' : 'text-crimson'}">
+          ${theyOweMe ? 'owes you' : 'you owe'} ${formatINR(Math.abs(b.netAmount))}
+        </p>
+      </div>`;
+    })
+    .join('');
+}
 
 /* ---------------- Totals ---------------- */
 async function renderTotals() {
@@ -115,6 +144,7 @@ async function renderLedgerList() {
       <div class="flex gap-2">
         ${!e.settled ? `<button data-settle="${e.id}" class="flex-1 py-2 rounded-xl bg-charcoal text-white font-black text-[11px] flex items-center justify-center gap-1.5">${icon('check', 13)} Mark Settled</button>` : ''}
         ${isOweMe && !e.settled ? `<button data-remind="${e.id}" class="flex-1 py-2 rounded-xl bg-green-600/10 text-green-700 font-black text-[11px] flex items-center justify-center gap-1.5">${icon('chat', 13)} WhatsApp Reminder</button>` : ''}
+        ${isOweMe && !e.settled && getUserUpiId() ? `<button data-copy-link="${e.id}" class="py-2 px-3 rounded-xl bg-sage/10 font-black text-[11px] flex items-center justify-center" aria-label="Copy payment link">${icon('send', 13)}</button>` : ''}
         <button data-delete-ledger="${e.id}" class="py-2 px-3 rounded-xl bg-crimson/10 text-crimson font-black text-[11px] flex items-center justify-center">${icon('trash', 14)}</button>
       </div>
     `;
@@ -142,6 +172,23 @@ async function renderLedgerList() {
       if (!entry) return;
       const link = buildWhatsAppReminderLink(entry.personName, entry.amount, entry.note);
       window.open(link, '_blank');
+    });
+  });
+  list.querySelectorAll('[data-copy-link]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const entries2 = await getLedgerEntries();
+      const entry = entries2.find((x) => x.id === Number(btn.dataset.copyLink));
+      if (!entry) return;
+      const link = buildPaymentRequestLink(entry.amount, entry.note || `From ${entry.personName}`);
+      try {
+        await navigator.clipboard.writeText(link);
+        btn.innerHTML = icon('check', 13);
+        setTimeout(() => {
+          btn.innerHTML = icon('send', 13);
+        }, 1500);
+      } catch (e) {
+        alert(link);
+      }
     });
   });
 }

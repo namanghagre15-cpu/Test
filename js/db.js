@@ -18,6 +18,18 @@ db.version(1).stores({
   archives: '++id, label, createdDate, snapshotJson',
 });
 
+db.version(2).stores({
+  transactions: '++id, amount, category, type, walletType, expenseType, date, note, isPending, recurringId',
+  wallets: 'type, balance',
+  vaultGoals: '++id, title, targetAmount, savedAmount, deadline, isEmergency',
+  recurring: '++id, title, amount, category, walletType, expenseType, frequency, nextDueDate, active',
+  ledger: '++id, personName, amount, direction, note, date, settled',
+  splits: '++id, title, totalAmount, payer, date, note, participantsJson',
+  challenges: '++id, type, status, startDate, endDate',
+  archives: '++id, label, createdDate, snapshotJson',
+  chatMessages: '++id, role, content, createdAt',
+});
+
 /* ------------------------------------------------------------
    Local settings (localStorage) — synchronous, needed on paint
    for things like theme/ghost-mode/pin, so we avoid async races.
@@ -135,7 +147,7 @@ export async function addIncome({ walletType, amount, note }) {
   });
 }
 
-export async function addExpense({ amount, category, walletType, expenseType, note, isPending, recurringId }) {
+export async function addExpense({ amount, category, walletType, expenseType, note, isPending, recurringId, receiptImage }) {
   const id = await db.transactions.add({
     amount,
     category,
@@ -146,6 +158,7 @@ export async function addExpense({ amount, category, walletType, expenseType, no
     note: note || '',
     isPending: isPending ? 1 : 0,
     recurringId: recurringId || null,
+    receiptImage: receiptImage || null,
   });
   if (!isPending) {
     await adjustWalletBalance(walletType, -amount);
@@ -227,7 +240,18 @@ export async function undoDeleteTransaction(tx) {
   }
 }
 
-export async function searchTransactions({ query, category, type, walletType, expenseType, startDate, endDate }) {
+export async function searchTransactions({
+  query,
+  category,
+  categories,
+  type,
+  walletType,
+  expenseType,
+  startDate,
+  endDate,
+  minAmount,
+  maxAmount,
+}) {
   let list = await db.transactions.orderBy('date').reverse().toArray();
   if (query) {
     const q = query.toLowerCase();
@@ -236,11 +260,14 @@ export async function searchTransactions({ query, category, type, walletType, ex
     );
   }
   if (category) list = list.filter((t) => t.category === category);
+  if (categories && categories.length > 0) list = list.filter((t) => categories.includes(t.category));
   if (type) list = list.filter((t) => t.type === type);
   if (walletType) list = list.filter((t) => t.walletType === walletType);
   if (expenseType) list = list.filter((t) => t.expenseType === expenseType);
   if (startDate) list = list.filter((t) => new Date(t.date) >= startDate);
   if (endDate) list = list.filter((t) => new Date(t.date) <= endDate);
+  if (minAmount != null) list = list.filter((t) => t.amount >= minAmount);
+  if (maxAmount != null) list = list.filter((t) => t.amount <= maxAmount);
   return list;
 }
 
@@ -480,6 +507,20 @@ export async function getCategoryBudgetStatus() {
 }
 
 /* ------------------------------------------------------------
+   Share-to-Add (Web Share Target) preference — OFF by default.
+   The parser itself (js/notif-parser.js) is on-device only and
+   hard-blocks OTP/verification-code text regardless of this
+   setting; this flag just controls whether shared text gets
+   processed into a pre-filled expense at all.
+   ------------------------------------------------------------ */
+export function isShareToAddEnabled() {
+  return getLocal('share_to_add_enabled', false);
+}
+export function setShareToAddEnabled(enabled) {
+  setLocal('share_to_add_enabled', !!enabled);
+}
+
+/* ------------------------------------------------------------
    Smart Spending Insights (rule-based)
    ------------------------------------------------------------ */
 
@@ -692,6 +733,62 @@ export async function getRecurringList() {
   return db.recurring.toArray();
 }
 
+/**
+ * Looks for a category+amount combo that's appeared 3+ times, on at least
+ * 2 different calendar months, and isn't already covered by an existing
+ * recurring rule — a strong signal it's actually a recurring expense
+ * (rent, a subscription, a regular allowance) the student hasn't set up
+ * as Recurring yet. Purely a suggestion; nothing is added automatically.
+ */
+export async function detectRecurringCandidates() {
+  const [txs, existingRecurring, dismissed] = await Promise.all([
+    db.transactions.where('type').equals('expense').toArray(),
+    getRecurringList(),
+    Promise.resolve(getLocal('dismissed_recurring_suggestions', [])),
+  ]);
+
+  const groups = {};
+  txs
+    .filter((t) => !t.isPending && !t.recurringId)
+    .forEach((t) => {
+      const key = `${t.category}|${t.amount}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(t);
+    });
+
+  const candidates = [];
+  Object.entries(groups).forEach(([key, list]) => {
+    if (list.length < 3) return;
+    const months = new Set(list.map((t) => new Date(t.date).toISOString().slice(0, 7)));
+    if (months.size < 2) return;
+
+    const [category, amountStr] = key.split('|');
+    const amount = parseFloat(amountStr);
+    const alreadyRecurring = existingRecurring.some((r) => r.category === category && r.amount === amount);
+    if (alreadyRecurring) return;
+    if (dismissed.includes(key)) return;
+
+    candidates.push({
+      key,
+      category,
+      amount,
+      count: list.length,
+      walletType: list[list.length - 1].walletType,
+      expenseType: list[list.length - 1].expenseType,
+    });
+  });
+
+  return candidates.sort((a, b) => b.count - a.count);
+}
+
+export function dismissRecurringSuggestion(key) {
+  const dismissed = getLocal('dismissed_recurring_suggestions', []);
+  if (!dismissed.includes(key)) {
+    dismissed.push(key);
+    setLocal('dismissed_recurring_suggestions', dismissed);
+  }
+}
+
 export async function addRecurring({ title, amount, category, walletType, expenseType, frequency, startDate }) {
   return db.recurring.add({
     title,
@@ -788,11 +885,85 @@ export async function getLedgerTotals() {
   return { owedToMe, iOwe };
 }
 
+/**
+ * Net balance per person across all unsettled ledger entries (which
+ * already include the auto-generated entries from group Splits) —
+ * a Splitwise-style "who owes what, net" view. Positive netAmount
+ * means that person owes you; negative means you owe them.
+ */
+export async function getGroupBalances() {
+  const entries = await getLedgerEntries();
+  const balances = {};
+  entries.forEach((e) => {
+    if (e.settled) return;
+    if (!balances[e.personName]) balances[e.personName] = 0;
+    balances[e.personName] += e.direction === 'owe_me' ? e.amount : -e.amount;
+  });
+  return Object.entries(balances)
+    .map(([personName, netAmount]) => ({ personName, netAmount: Math.round(netAmount * 100) / 100 }))
+    .filter((b) => Math.abs(b.netAmount) > 0.5)
+    .sort((a, b) => b.netAmount - a.netAmount);
+}
+
+/* ------------------------------------------------------------
+   AI Assistant config — provider, API key, model. Stored only
+   in localStorage on this device; sent only to the provider you
+   choose, directly from the browser, never through any server
+   of ours (there is no server).
+   ------------------------------------------------------------ */
+export function getAIConfig() {
+  return getLocal('ai_config', { provider: 'groq', apiKey: '', model: '' });
+}
+export function setAIConfig(config) {
+  setLocal('ai_config', config);
+}
+export function isAIConfigured() {
+  const c = getAIConfig();
+  return !!(c.apiKey && c.apiKey.trim());
+}
+
+export async function getChatHistory(limit = 50) {
+  const rows = await db.chatMessages.orderBy('createdAt').toArray();
+  return rows.slice(-limit);
+}
+export async function addChatMessage(role, content) {
+  return db.chatMessages.add({ role, content, createdAt: new Date().toISOString() });
+}
+export async function clearChatHistory() {
+  return db.chatMessages.clear();
+}
+export function getUserUpiId() {
+  return getLocal('user_upi_id', '');
+}
+export function setUserUpiId(upiId) {
+  setLocal('user_upi_id', (upiId || '').trim());
+}
+
 export function buildWhatsAppReminderLink(personName, amount, note) {
+  const upiId = getUserUpiId();
+  const paymentLine = upiId
+    ? ` Pay me directly here: ${buildPaymentRequestLink(amount, note)}`
+    : '';
   const msg = `Hi ${personName}! Just a friendly reminder — ${formatINR(amount)}${
     note ? ` (${note})` : ''
-  } is pending. Whenever you get a chance 🙂`;
+  } is pending.${paymentLine} Whenever you get a chance 🙂`;
   return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+}
+
+/**
+ * Builds a standard "upi://pay" link pre-filled with YOUR UPI ID as the
+ * payee, so whoever opens it (on their own phone) gets their UPI app
+ * ready to pay you this exact amount. Note: this is a payment link, not
+ * a true bank-level "Collect Request" — those can only be issued by
+ * NPCI-registered merchants/PSPs, not by a personal app like this one.
+ * A payment link achieves the same practical outcome for a Khata
+ * reminder: one tap for the other person to pay you.
+ */
+export function buildPaymentRequestLink(amount, note) {
+  const upiId = getUserUpiId();
+  if (!upiId) return '';
+  const amt = Math.round(amount * 100) / 100;
+  return `upi://pay?pa=${encodeURIComponent(upiId)}&am=${amt}&cu=INR&tn=${encodeURIComponent(note || 'Money follow reminder')}`;
 }
 
 export async function addSplit({ title, totalAmount, payer, participants, note }) {
@@ -884,7 +1055,7 @@ export async function deleteArchive(id) {
    JSON Backup Export / Import
    ------------------------------------------------------------ */
 
-export async function exportBackupJSON() {
+export async function exportBackupJSON(password) {
   const [transactions, wallets, vaultGoals, recurring, ledger, splits, challenges, archives] = await Promise.all([
     db.transactions.toArray(),
     db.wallets.toArray(),
@@ -910,20 +1081,41 @@ export async function exportBackupJSON() {
     localSettings,
   };
 
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  let fileContent;
+  if (password) {
+    const { encryptBackupPayload } = await import('./crypto-backup.js');
+    const envelope = await encryptBackupPayload(JSON.stringify(backup), password);
+    fileContent = JSON.stringify({ app: 'Money follow', version: 1, ...envelope }, null, 2);
+  } else {
+    fileContent = JSON.stringify(backup, null, 2);
+  }
+
+  const blob = new Blob([fileContent], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `money-follow-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `money-follow-backup-${new Date().toISOString().slice(0, 10)}${password ? '-encrypted' : ''}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
 }
 
-export async function importBackupJSON(file) {
+export async function importBackupJSON(file, password) {
   const text = await file.text();
-  const backup = JSON.parse(text);
+  let backup = JSON.parse(text);
+
+  if (backup && backup.encrypted) {
+    if (!password) {
+      const err = new Error('This backup is password-protected.');
+      err.needsPassword = true;
+      throw err;
+    }
+    const { decryptBackupPayload } = await import('./crypto-backup.js');
+    const decrypted = await decryptBackupPayload(backup, password);
+    backup = JSON.parse(decrypted);
+  }
+
   if (!backup || !backup.data) throw new Error('This file does not look like a valid Money follow backup.');
 
   const { transactions, wallets, vaultGoals, recurring, ledger, splits, challenges, archives } = backup.data;

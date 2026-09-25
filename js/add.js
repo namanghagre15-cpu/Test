@@ -130,6 +130,53 @@ function readAmount() {
   return Math.round(val * 100) / 100;
 }
 
+/* ---------------- Receipt photo (optional, compressed client-side) ---------------- */
+let receiptBlob = null;
+
+function resizeImageToBlob(file, maxDim = 900, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('receipt-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  receiptBlob = await resizeImageToBlob(file);
+  document.getElementById('receipt-preview-img').src = URL.createObjectURL(receiptBlob);
+  document.getElementById('receipt-empty-row').classList.add('hidden');
+  document.getElementById('receipt-preview-row').classList.remove('hidden');
+});
+
+document.getElementById('receipt-remove-btn').addEventListener('click', () => {
+  receiptBlob = null;
+  document.getElementById('receipt-input').value = '';
+  document.getElementById('receipt-empty-row').classList.remove('hidden');
+  document.getElementById('receipt-preview-row').classList.add('hidden');
+});
+
 /* ---------------- Save (instant, non-pending) ---------------- */
 
 document.getElementById('save-btn').addEventListener('click', async () => {
@@ -143,6 +190,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     expenseType: selectedExpenseType,
     note: noteInput.value.trim(),
     isPending: false,
+    receiptImage: receiptBlob,
   });
 
   window.location.href = 'index.html';

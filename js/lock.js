@@ -188,7 +188,7 @@ function buildOverlay() {
   overlay.className = 'lock-overlay';
   overlay.innerHTML = `
     <div class="lock-panel">
-      <div class="w-16 h-16 rounded-3xl bg-crimson/10 flex items-center justify-center text-crimson mb-4">${icon('lock', 28)}</div>
+      <img src="assets/logo-mark.png" alt="Money follow" class="w-14 h-14 mb-4" />
       <h2 class="text-[22px] font-black mb-1">Enter PIN</h2>
       <p class="text-[13px] font-bold text-sage mb-5">Unlock Money follow to continue</p>
 

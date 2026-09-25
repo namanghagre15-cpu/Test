@@ -5,6 +5,7 @@
 import { renderNav } from './nav.js';
 import { isDarkMode, toggleTheme } from './theme.js';
 import { isGhostMode, toggleGhostMode } from './ghost.js';
+import { LOGO_MARK_BASE64 } from './pdf-logo.js';
 import {
   hasPinSet,
   setupPin,
@@ -27,6 +28,12 @@ import {
   getCategoryBudgets,
   setCategoryBudget,
   getCategoryBudgetStatus,
+  isShareToAddEnabled,
+  setShareToAddEnabled,
+  getUserUpiId,
+  setUserUpiId,
+  getAIConfig,
+  setAIConfig,
   getRecurringList,
   addRecurring,
   deleteRecurring,
@@ -47,6 +54,44 @@ import { icon } from './icons.js';
 renderNav('settings');
 window.__mfAppRendered = true;
 
+/* ---------------- Payment (UPI ID) ---------------- */
+const upiIdInput = document.getElementById('user-upi-id-input');
+upiIdInput.value = getUserUpiId();
+upiIdInput.addEventListener('change', () => setUserUpiId(upiIdInput.value));
+
+/* ---------------- AI Assistant ---------------- */
+const aiConfig = getAIConfig();
+let aiProvider = aiConfig.provider || 'groq';
+const aiApiKeyInput = document.getElementById('ai-api-key-input');
+const aiModelInput = document.getElementById('ai-model-input');
+aiApiKeyInput.value = aiConfig.apiKey || '';
+aiModelInput.value = aiConfig.model || '';
+
+function paintAIProvider() {
+  document.querySelectorAll('.ai-provider-btn').forEach((b) => {
+    const active = b.dataset.aiProvider === aiProvider;
+    b.classList.toggle('bg-charcoal', active);
+    b.classList.toggle('text-white', active);
+  });
+  aiModelInput.placeholder = aiProvider === 'gemini' ? 'e.g. gemini-3.8-flash' : 'e.g. openai/gpt-oss-120b';
+}
+document.querySelectorAll('.ai-provider-btn').forEach((b) => {
+  b.addEventListener('click', () => {
+    aiProvider = b.dataset.aiProvider;
+    paintAIProvider();
+  });
+});
+paintAIProvider();
+
+document.getElementById('ai-save-btn').addEventListener('click', () => {
+  setAIConfig({ provider: aiProvider, apiKey: aiApiKeyInput.value.trim(), model: aiModelInput.value.trim() });
+  const status = document.getElementById('ai-save-status');
+  status.textContent = 'Saved — open the chat button on any page to try it.';
+  status.classList.remove('hidden', 'text-crimson');
+  status.classList.add('text-sage');
+  setTimeout(() => status.classList.add('hidden'), 3000);
+});
+
 /* ---------------- Appearance switches ---------------- */
 
 function paintSwitch(el, on) {
@@ -60,6 +105,14 @@ darkSwitch.addEventListener('click', () => paintSwitch(darkSwitch, toggleTheme()
 const ghostSwitch = document.getElementById('ghost-mode-switch');
 paintSwitch(ghostSwitch, isGhostMode());
 ghostSwitch.addEventListener('click', () => paintSwitch(ghostSwitch, toggleGhostMode()));
+
+const shareToAddSwitch = document.getElementById('share-to-add-switch');
+paintSwitch(shareToAddSwitch, isShareToAddEnabled());
+shareToAddSwitch.addEventListener('click', () => {
+  const next = !isShareToAddEnabled();
+  setShareToAddEnabled(next);
+  paintSwitch(shareToAddSwitch, next);
+});
 
 /* ---------------- Security: PIN + Biometric ---------------- */
 
@@ -347,7 +400,10 @@ document.getElementById('add-recurring-btn').addEventListener('click', async () 
 
 /* ---------------- Backup & Restore ---------------- */
 
-document.getElementById('export-json-btn').addEventListener('click', () => exportBackupJSON());
+document.getElementById('export-json-btn').addEventListener('click', () => {
+  const password = document.getElementById('backup-password-input').value.trim();
+  exportBackupJSON(password || undefined);
+});
 
 document.getElementById('import-json-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
@@ -357,14 +413,31 @@ document.getElementById('import-json-input').addEventListener('change', async (e
     e.target.value = '';
     return;
   }
+  statusEl.classList.add('hidden');
   try {
     await importBackupJSON(file);
     alert('Backup restored! Reloading…');
     window.location.reload();
   } catch (err) {
-    statusEl.textContent = 'Import failed: ' + err.message;
-    statusEl.classList.remove('hidden');
+    if (err.needsPassword) {
+      const password = prompt('This backup is password-protected. Enter the password to restore it:');
+      if (password) {
+        try {
+          await importBackupJSON(file, password);
+          alert('Backup restored! Reloading…');
+          window.location.reload();
+          return;
+        } catch (err2) {
+          statusEl.textContent = 'Import failed: ' + err2.message;
+          statusEl.classList.remove('hidden');
+        }
+      }
+    } else {
+      statusEl.textContent = 'Import failed: ' + err.message;
+      statusEl.classList.remove('hidden');
+    }
   }
+  e.target.value = '';
 });
 
 /* ---------------- Parents Export (PDF / Excel) ---------------- */
@@ -397,84 +470,215 @@ document.getElementById('export-pdf-btn').addEventListener('click', async () => 
   const { txs, totalIncome, totalExpense, byCategory } = await buildParentSummary();
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  let y = 18;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const CRIMSON = [202, 0, 19];
+  const CHARCOAL = [23, 30, 25];
+  const SAGE = [110, 125, 120];
+  const LIGHT = [245, 243, 238];
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('Money follow — Expense Summary', 14, y);
-  y += 8;
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}${smartExportOn ? '  (Wants excluded)' : ''}`, 14, y);
-  y += 10;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text(`Total Income: Rs. ${Math.round(totalIncome)}`, 14, y);
-  y += 7;
-  doc.text(`Total Expense: Rs. ${Math.round(totalExpense)}`, 14, y);
-  y += 10;
-
-  doc.setFontSize(13);
-  doc.text('By Category', 14, y);
-  y += 7;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  Object.entries(byCategory)
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([cat, amt]) => {
-      doc.text(`${cat}`, 14, y);
-      doc.text(`Rs. ${Math.round(amt)}`, 160, y, { align: 'right' });
-      y += 6;
-      if (y > 270) {
-        doc.addPage();
-        y = 18;
-      }
-    });
-
-  y += 6;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text('Transaction Log', 14, y);
-  y += 7;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  txs.slice(0, 200).forEach((t) => {
-    if (y > 280) {
-      doc.addPage();
-      y = 18;
+  function drawHeaderBanner(title) {
+    doc.setFillColor(...CHARCOAL);
+    doc.rect(0, 0, pageWidth, 28, 'F');
+    try {
+      doc.addImage(LOGO_MARK_BASE64, 'PNG', 14, 6, 14, 17.4);
+    } catch (e) {
+      /* logo optional — never block the export if it fails to embed */
     }
-    const line = `${new Date(t.date).toLocaleDateString('en-IN')}  ${t.type.toUpperCase()}  ${t.category}  Rs.${Math.round(t.amount)}  ${t.note || ''}`;
-    doc.text(line, 14, y);
-    y += 5;
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('Money follow', 32, 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(title, 32, 20);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  function drawFooter() {
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      const h = doc.internal.pageSize.getHeight();
+      doc.setDrawColor(...LIGHT);
+      doc.line(14, h - 14, pageWidth - 14, h - 14);
+      doc.setFontSize(8);
+      doc.setTextColor(...SAGE);
+      doc.text('Generated by Money follow — on-device only, not shared with anyone.', 14, h - 9);
+      doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, h - 9, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
+    }
+  }
+
+  drawHeaderBanner(
+    `Expense Summary — Generated ${new Date().toLocaleDateString('en-IN')}${smartExportOn ? ' (Wants excluded)' : ''}`
+  );
+  let y = 40;
+
+  // Totals strip
+  doc.setFillColor(...LIGHT);
+  doc.roundedRect(14, y, pageWidth - 28, 20, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...SAGE);
+  doc.text('TOTAL INCOME', 20, y + 7);
+  doc.text('TOTAL EXPENSE', pageWidth / 2 + 6, y + 7);
+  doc.setFontSize(13);
+  doc.setTextColor(...CHARCOAL);
+  doc.text(`Rs. ${Math.round(totalIncome)}`, 20, y + 15);
+  doc.setTextColor(...CRIMSON);
+  doc.text(`Rs. ${Math.round(totalExpense)}`, pageWidth / 2 + 6, y + 15);
+  doc.setTextColor(0, 0, 0);
+  y += 30;
+
+  // Category breakdown table
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('By Category', 14, y);
+  y += 4;
+  const catRows = Object.entries(byCategory)
+    .sort((a, b) => b[1] - a[1])
+    .map(([cat, amt]) => [cat, `Rs. ${Math.round(amt)}`]);
+  doc.autoTable({
+    startY: y,
+    head: [['Category', 'Amount']],
+    body: catRows,
+    theme: 'striped',
+    headStyles: { fillColor: CHARCOAL, textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: LIGHT },
+    styles: { fontSize: 10, cellPadding: 3 },
+    columnStyles: { 1: { halign: 'right' } },
+    margin: { left: 14, right: 14 },
+  });
+  y = doc.lastAutoTable.finalY + 12;
+
+  // Transaction log table
+  if (y > 250) {
+    doc.addPage();
+    y = 20;
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Transaction Log', 14, y);
+  y += 4;
+  const txRows = txs
+    .slice(0, 300)
+    .map((t) => [
+      new Date(t.date).toLocaleDateString('en-IN'),
+      t.type.toUpperCase(),
+      t.category,
+      `Rs. ${Math.round(t.amount)}`,
+      t.note || '',
+    ]);
+  doc.autoTable({
+    startY: y,
+    head: [['Date', 'Type', 'Category', 'Amount', 'Note']],
+    body: txRows,
+    theme: 'striped',
+    headStyles: { fillColor: CRIMSON, textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: LIGHT },
+    styles: { fontSize: 8, cellPadding: 2.5 },
+    columnStyles: { 3: { halign: 'right' } },
+    margin: { left: 14, right: 14 },
   });
 
+  drawFooter();
   doc.save(`money-follow-summary-${new Date().toISOString().slice(0, 10)}.pdf`);
 });
 
 document.getElementById('export-excel-btn').addEventListener('click', async () => {
   const { txs, totalIncome, totalExpense, byCategory } = await buildParentSummary();
+  const CRIMSON_HEX = 'FFCA0013';
+  const CHARCOAL_HEX = 'FF171E19';
+  const LIGHT_HEX = 'FFF5F3EE';
 
-  const summaryRows = [
-    { Metric: 'Total Income', Value: totalIncome },
-    { Metric: 'Total Expense', Value: totalExpense },
-    ...Object.entries(byCategory).map(([cat, amt]) => ({ Metric: `Category: ${cat}`, Value: amt })),
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Money follow';
+  workbook.created = new Date();
+
+  /* ---------------- Summary sheet ---------------- */
+  const summarySheet = workbook.addWorksheet('Summary');
+  summarySheet.columns = [{ width: 26 }, { width: 18 }];
+
+  const titleRow = summarySheet.addRow(['Money follow — Expense Summary']);
+  summarySheet.mergeCells('A1:B1');
+  titleRow.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
+  titleRow.height = 26;
+  titleRow.alignment = { vertical: 'middle' };
+  summarySheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: CHARCOAL_HEX } };
+
+  const genRow = summarySheet.addRow([`Generated ${new Date().toLocaleDateString('en-IN')}${smartExportOn ? ' (Wants excluded)' : ''}`]);
+  summarySheet.mergeCells(`A2:B2`);
+  genRow.font = { italic: true, size: 9, color: { argb: 'FF6E7D78' } };
+  summarySheet.addRow([]);
+
+  const totalsHeaderRow = summarySheet.addRow(['Metric', 'Amount (₹)']);
+  totalsHeaderRow.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: CRIMSON_HEX } };
+  });
+
+  const summaryData = [
+    ['Total Income', totalIncome],
+    ['Total Expense', totalExpense],
+    ...Object.entries(byCategory)
+      .sort((a, b) => b[1] - a[1])
+      .map(([cat, amt]) => [`Category: ${cat}`, amt]),
   ];
+  summaryData.forEach((rowData, i) => {
+    const row = summarySheet.addRow(rowData);
+    row.getCell(2).numFmt = '₹#,##0';
+    if (i % 2 === 0) {
+      row.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_HEX } };
+      });
+    }
+  });
 
-  const txRows = txs.map((t) => ({
-    Date: new Date(t.date).toLocaleDateString('en-IN'),
-    Type: t.type,
-    Category: t.category,
-    Wallet: t.walletType,
-    'Need/Want': t.expenseType || '',
-    Amount: t.amount,
-    Note: t.note || '',
-  }));
+  /* ---------------- Transactions sheet ---------------- */
+  const txSheet = workbook.addWorksheet('Transactions');
+  txSheet.columns = [
+    { header: 'Date', key: 'date', width: 14 },
+    { header: 'Type', key: 'type', width: 10 },
+    { header: 'Category', key: 'category', width: 16 },
+    { header: 'Wallet', key: 'wallet', width: 10 },
+    { header: 'Need/Want', key: 'need', width: 12 },
+    { header: 'Amount', key: 'amount', width: 12 },
+    { header: 'Note', key: 'note', width: 30 },
+  ];
+  txSheet.getRow(1).eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: CHARCOAL_HEX } };
+  });
+  txSheet.views = [{ state: 'frozen', ySplit: 1 }];
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txRows), 'Transactions');
-  XLSX.writeFile(wb, `money-follow-summary-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  txs.forEach((t, i) => {
+    const row = txSheet.addRow({
+      date: new Date(t.date).toLocaleDateString('en-IN'),
+      type: t.type,
+      category: t.category,
+      wallet: t.walletType,
+      need: t.expenseType || '',
+      amount: t.amount,
+      note: t.note || '',
+    });
+    row.getCell('amount').numFmt = '₹#,##0';
+    if (i % 2 === 0) {
+      row.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_HEX } };
+      });
+    }
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `money-follow-summary-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 });
 
 /* ---------------- Semester Archive ---------------- */

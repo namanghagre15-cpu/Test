@@ -17,6 +17,9 @@ import {
   getDailySafeToSpend,
   getLowBalanceThreshold,
   getCategoryBudgetStatus,
+  detectRecurringCandidates,
+  dismissRecurringSuggestion,
+  addRecurring,
   generateInsights,
   getFinancialHealthScore,
   getCurrentNoSpendStreak,
@@ -88,6 +91,54 @@ async function renderCategoryBudgetAlerts() {
     .join('');
 }
 
+async function renderRecurringSuggestions() {
+  const candidates = await detectRecurringCandidates();
+  const el = document.getElementById('recurring-suggestions');
+  if (candidates.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = candidates
+    .slice(0, 2)
+    .map(
+      (c) => `
+      <div class="rounded-2xl bg-sage/10 border border-sage-soft px-4 py-3">
+        <p class="text-[12px] font-bold text-ink leading-snug mb-2 flex items-center gap-2">
+          <span class="text-crimson shrink-0">${icon('repeat', 15)}</span>
+          You've spent ${formatINR(c.amount)} on ${c.category} ${c.count} times — make it recurring?
+        </p>
+        <div class="flex gap-2">
+          <button data-add-recurring="${c.key}" class="flex-1 py-2 rounded-xl bg-charcoal text-white font-black text-[11px]">Add as Recurring</button>
+          <button data-dismiss-recurring="${c.key}" class="px-3 py-2 rounded-xl border border-sage-soft font-black text-[11px] text-sage">Not now</button>
+        </div>
+      </div>`
+    )
+    .join('');
+
+  el.querySelectorAll('[data-dismiss-recurring]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      dismissRecurringSuggestion(btn.dataset.dismissRecurring);
+      renderRecurringSuggestions();
+    });
+  });
+  el.querySelectorAll('[data-add-recurring]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const c = candidates.find((x) => x.key === btn.dataset.addRecurring);
+      if (!c) return;
+      await addRecurring({
+        title: c.category,
+        amount: c.amount,
+        category: c.category,
+        walletType: c.walletType,
+        expenseType: c.expenseType,
+        frequency: 'monthly',
+      });
+      showToast(`${c.category} added as a recurring expense`);
+      await renderRecurringSuggestions();
+    });
+  });
+}
+
 async function renderSummary() {
   const [available, vaultLocked, wallets, dailySafe] = await Promise.all([
     getAvailableToSpend(),
@@ -111,6 +162,7 @@ async function renderSummary() {
   document.getElementById('low-balance-alert').classList.toggle('hidden', available >= threshold);
 
   await renderCategoryBudgetAlerts();
+  await renderRecurringSuggestions();
 
   const { income, expense } = await getMonthlyIncomeExpense();
   const alertEl = document.getElementById('alert-text');

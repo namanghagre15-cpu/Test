@@ -7,6 +7,7 @@
 import { initAppLock } from './lock.js';
 import { runDueRecurring } from './db.js';
 import './theme.js';
+import './ai-chat.js';
 
 // Register the service worker once, from whichever page loads first.
 if ('serviceWorker' in navigator) {

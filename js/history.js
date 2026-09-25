@@ -42,10 +42,14 @@ const filterExpenseType = document.getElementById('filter-expense-type');
 filterCategory.insertAdjacentHTML('afterbegin', '<option value="">All Categories</option>');
 
 let currentResults = [];
+const filterMinAmount = document.getElementById('filter-min-amount');
+const filterMaxAmount = document.getElementById('filter-max-amount');
 
 async function runSearch() {
   const startDateVal = null;
   const endDateVal = null;
+  const minVal = filterMinAmount.value !== '' ? parseFloat(filterMinAmount.value) : null;
+  const maxVal = filterMaxAmount.value !== '' ? parseFloat(filterMaxAmount.value) : null;
   currentResults = await searchTransactions({
     query: searchInput.value.trim(),
     type: filterType.value || null,
@@ -54,9 +58,23 @@ async function runSearch() {
     expenseType: filterExpenseType.value || null,
     startDate: startDateVal,
     endDate: endDateVal,
+    minAmount: minVal,
+    maxAmount: maxVal,
   });
   renderList();
 }
+filterMinAmount.addEventListener('input', runSearch);
+filterMaxAmount.addEventListener('input', runSearch);
+
+function openReceiptLightbox(blob) {
+  const lightbox = document.getElementById('receipt-lightbox');
+  const img = document.getElementById('receipt-lightbox-img');
+  img.src = URL.createObjectURL(blob);
+  lightbox.classList.remove('hidden');
+}
+document.getElementById('receipt-lightbox-close').addEventListener('click', () => {
+  document.getElementById('receipt-lightbox').classList.add('hidden');
+});
 
 function renderList() {
   listEl.innerHTML = '';
@@ -91,6 +109,7 @@ function renderList() {
       ${
         t.type !== 'transfer'
           ? `<div class="flex gap-2 mt-2 pt-2 border-t border-sage-soft/60">
+        ${t.receiptImage ? `<button data-view-receipt="${t.id}" class="py-2 px-3 rounded-xl bg-sage/10 font-black text-[11px] flex items-center justify-center gap-1.5">${icon('camera', 13)}</button>` : ''}
         <button data-edit="${t.id}" class="flex-1 py-2 rounded-xl bg-sage/10 font-black text-[11px] flex items-center justify-center gap-1.5">${icon('edit', 13)} Edit</button>
         <button data-delete="${t.id}" class="flex-1 py-2 rounded-xl bg-crimson/10 text-crimson font-black text-[11px] flex items-center justify-center gap-1.5">${icon('trash', 13)} Delete</button>
       </div>`
@@ -101,6 +120,12 @@ function renderList() {
     setMoneyText(item.querySelector('.mf-amt'), `${sign} ${formatINR(t.amount)}`);
   });
 
+  listEl.querySelectorAll('[data-view-receipt]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tx = currentResults.find((t) => t.id === Number(btn.dataset.viewReceipt));
+      if (tx && tx.receiptImage) openReceiptLightbox(tx.receiptImage);
+    });
+  });
   listEl.querySelectorAll('[data-edit]').forEach((btn) => {
     btn.addEventListener('click', () => openEditModal(Number(btn.dataset.edit)));
   });
