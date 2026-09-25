@@ -110,7 +110,13 @@ export class Dexie {
         record.stores = { ...definitions };
         for (const [name, definition] of Object.entries(definitions || {})) {
           this._schema[name] = parseSchema(definition);
-          if (!this._tables.has(name)) this._tables.set(name, new Table(this, name));
+          if (!this._tables.has(name)) {
+            const table = new Table(this, name);
+            this._tables.set(name, table);
+            if (!Object.prototype.hasOwnProperty.call(this, name)) {
+              Object.defineProperty(this, name, { enumerable: true, configurable: true, get: () => this._table(name) });
+            }
+          }
         }
         return this;
       },
@@ -181,7 +187,13 @@ export class Dexie {
   }
 
   _table(name) {
-    if (!this._tables.has(name)) this._tables.set(name, new Table(this, name));
+    if (!this._tables.has(name)) {
+      const table = new Table(this, name);
+      this._tables.set(name, table);
+      if (!Object.prototype.hasOwnProperty.call(this, name)) {
+        Object.defineProperty(this, name, { enumerable: true, configurable: true, get: () => this._table(name) });
+      }
+    }
     return this._tables.get(name);
   }
 
