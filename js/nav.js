@@ -35,39 +35,26 @@ const ICONS = {
   settings: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2.06 2.06 0 1 1-2.92 2.92l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56v.09a2.06 2.06 0 1 1-4.12 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2.06 2.06 0 1 1-2.92-2.92l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H4.4a2.06 2.06 0 1 1 0-4.12h.09A1.7 1.7 0 0 0 6.05 6.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2.06 2.06 0 1 1 2.92-2.92l.06.06a1.7 1.7 0 0 0 1.87.34H10.6A1.7 1.7 0 0 0 11.63 1h.07a2.06 2.06 0 1 1 4.12 0v.09a2.06 2.06 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2.06 2.06 0 1 1 2.92 2.92l-.06.06a1.7 1.7 0 0 0 .34 1.87v.06a1.7 1.7 0 0 0 1.56 1.03h.09a2.06 2.06 0 1 1 0 4.12h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/></svg>`,
 };
 
-const NAV_ITEMS = [ `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.6L13 21l-2-1.6L9 21l-2.5-1.6L4.5 21V3H6Z"/><path d="M8 8h8M8 11.5h8M8 15h5"/></svg>`,
-  khata: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 12 4-3.5 3 2 4-3 3 2.2 4-2.7 2 2.5-6 5-2.2-1.7-3.6 2.7L7 13.5Z"/><path d="m6.5 8.5 4.2 5.2M17 9.5l-4 5"/></svg>`,
-  settings: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2.06 2.06 0 1 1-2.92 2.92l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56v.09a2.06 2.06 0 1 1-4.12 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2.06 2.06 0 1 1-2.92-2.92l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H4.4a2.06 2.06 0 1 1 0-4.12h.09A1.7 1.7 0 0 0 6.05 6.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2.06 2.06 0 1 1 2.92-2.92l.06.06a1.7 1.7 0 0 0 1.87.34H10.6A1.7 1.7 0 0 0 11.63 1h.07a2.06 2.06 0 1 1 4.12 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2.06 2.06 0 1 1 2.92 2.92l-.06.06a1.7 1.7 0 0 0 .34 1.87v.06a1.7 1.7 0 0 0 1.56 1.03h.09a2.06 2.06 0 1 1 0 4.12h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/></svg>`,
 const NAV_ITEMS = [
   { id: 'dashboard', href: 'index.html', icon: 'home', label: 'Home' },
   { id: 'wallet', href: 'wallet.html', icon: 'wallet', label: 'Wallet' },
   { id: 'add', href: 'add.html', icon: 'plus', label: 'Add', isFab: true },
   { id: 'stats', href: 'stats.html', icon: 'chart', label: 'Stats' },
   { id: 'vault', href: 'vault.html', icon: 'lock', label: 'Vault' },
+  { id: 'history', href: 'history.html', icon: 'history', label: 'History' },
+  { id: 'khata', href: 'khata.html', icon: 'khata', label: 'Khata' },
+  { id: 'settings', href: 'settings.html', icon: 'settings', label: 'Settings' },
 ];
 
 export function renderNav(activePage) {
   const container = document.getElementById('bottom-nav');
   if (!container) return;
+ 
+  const allItems = NAV_ITEMS.map(item => ({ ...item, isAdd: item.id === 'add' }));
+  const primary = NAV_ITEMS.filter(item =>
+    ['dashboard', 'wallet', 'add', 'stats', 'vault'].includes(item.id)
+  );
 
-  const allItems = [
-    { id: 'dashboard', href: 'index.html', icon: 'home', label: 'Overview' },
-    { id: 'add', href: 'add.html', icon: 'plus', label: 'Add', isAdd: true },
-    { id: 'wallet', href: 'wallet.html', icon: 'wallet', label: 'Wallet' },
-    { id: 'stats', href: 'stats.html', icon: 'chart', label: 'Statistics' },
-    { id: 'history', href: 'history.html', icon: 'history', label: 'History' },
-    { id: 'khata', href: 'khata.html', icon: 'khata', label: 'Khata' },
-    { id: 'vault', href: 'vault.html', icon: 'lock', label: 'Vault' },
-    { id: 'settings', href: 'settings.html', icon: 'settings', label: 'Settings' },
-  ];
-
-  const primary = [
-    { id: 'dashboard', href: 'index.html', icon: 'home', label: 'Home' },
-    { id: 'wallet', href: 'wallet.html', icon: 'wallet', label: 'Wallet' },
-    { id: 'add', href: 'add.html', icon: 'plus', label: 'Add', isFab: true },
-    { id: 'stats', href: 'stats.html', icon: 'chart', label: 'Stats' },
-    { id: 'vault', href: 'vault.html', icon: 'lock', label: 'Vault' },
-  ];
 
   const link = (item, className) => {
     const active = item.id === activePage;
