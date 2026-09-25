@@ -19,10 +19,9 @@
   } catch (e) {}
 </script>
 <script src="js/boot-guard.js"></script>
-<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  tailwind.config = {
+  if (window.tailwind) tailwind.config = {
     darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
       extend: {
@@ -38,9 +37,6 @@
   };
 </script>
 <link rel="stylesheet" href="css/styles.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
 <body class="bg-surface text-ink font-sans" data-page="settings">
 

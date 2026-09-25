@@ -1,8 +1,7 @@
 /* ============================================================
    sw.js — Service Worker for Money follow
    Caches the app shell for offline use, including third-party
-   CDN libraries (Dexie, Tailwind, Chart.js, jsPDF, SheetJS,
-   fonts) so a fully offline cold start still works.
+   optional third-party libraries (Tailwind, Chart.js, jsPDF, ExcelJS, fonts) so a fully offline cold start still works.
 
    IMPORTANT FIX (v3): cross-origin <script src> tags are fetched
    by the browser in "no-cors" mode, which makes the Service
@@ -21,7 +20,7 @@
    fallback safety net.
    ============================================================ */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4-local-db';
 const CACHE_NAME = `money-follow-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -39,6 +38,7 @@ const APP_SHELL = [
   './manifest.json',
   './css/styles.css',
   './js/db.js',
+  './js/idb-lite.js',
   './js/icons.js',
   './js/boot-guard.js',
   './js/nav.js',
@@ -71,7 +71,6 @@ const APP_SHELL = [
 // fetched with an explicit CORS request during install so they land in
 // the cache as fully readable, replayable 200 responses — not opaque.
 const EXTERNAL_ASSETS = [
-  'https://unpkg.com/dexie@3/dist/dexie.js',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js@4',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
