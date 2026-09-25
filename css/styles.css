@@ -133,6 +133,59 @@ body {
 
 .page-shell { min-height: 100vh; padding-bottom: 110px; }
 
+/* ---------- Floating AI chat button + panel ---------- */
+#mf-ai-fab {
+  position: fixed; right: 1rem; bottom: calc(64px + 0.5rem + 14px); z-index: 55;
+  width: 52px; height: 52px; border-radius: 9999px;
+  background: #ca0013; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 30px -5px rgba(202, 0, 19, 0.45);
+}
+#mf-ai-fab:active { transform: scale(0.94); }
+#mf-ai-panel {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 150;
+  max-width: 480px; margin: 0 auto;
+  height: 78vh; max-height: 640px;
+  background: var(--color-surface);
+  border-radius: 2rem 2rem 0 0;
+  box-shadow: 0 -20px 50px -12px rgba(0,0,0,0.3);
+  display: flex; flex-direction: column;
+  animation: sheet-up 0.22s ease-out both;
+}
+.mf-ai-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 1.1rem 0.85rem; border-bottom: 1px solid rgba(183,198,194,0.25);
+  flex-shrink: 0;
+}
+.mf-ai-messages {
+  flex: 1; overflow-y: auto; padding: 1rem 1.1rem;
+  display: flex; flex-direction: column; gap: 0.6rem;
+}
+.mf-ai-empty {
+  color: var(--color-sage, #b7c6c2); font-size: 12px; font-weight: 700;
+  text-align: center; padding: 2rem 1rem;
+}
+.mf-ai-bubble {
+  max-width: 82%; padding: 0.65rem 0.95rem; border-radius: 1.2rem;
+  font-size: 13px; font-weight: 600; line-height: 1.4; white-space: pre-wrap;
+}
+.mf-ai-user { align-self: flex-end; background: #171e19; color: #fff; border-bottom-right-radius: 0.35rem; }
+.mf-ai-assistant { align-self: flex-start; background: var(--color-card); border: 1px solid rgba(183,198,194,0.3); border-bottom-left-radius: 0.35rem; }
+.mf-ai-setup { padding: 1.5rem 1.1rem; text-align: center; }
+.mf-ai-inputrow {
+  flex-shrink: 0; display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.85rem 1rem; border-top: 1px solid rgba(183,198,194,0.25);
+}
+.mf-ai-inputrow input {
+  flex: 1; background: var(--color-card); border: 1px solid rgba(183,198,194,0.3);
+  border-radius: 9999px; padding: 0.7rem 1.1rem; font-size: 13px; font-weight: 600;
+  outline: none; color: var(--color-ink);
+}
+.mf-ai-inputrow button {
+  width: 42px; height: 42px; border-radius: 9999px; background: #ca0013; color: #fff;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
 /* ---------- Modal / bottom sheet ---------- */
 .sheet-overlay {
   position: fixed; inset: 0; background: rgba(23, 30, 25, 0.5);
@@ -180,6 +233,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.85rem;
+  width: 100%;
 }
 .numpad-btn {
   height: 66px;
