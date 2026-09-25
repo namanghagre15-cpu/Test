@@ -4,6 +4,7 @@
    executed BEFORE this module runs.
    ============================================================ */
 import { categoryIconSvg } from './icons.js';
+import { Dexie } from './idb-lite.js';
 
 export const db = new Dexie('MoneyFollowDB');
 

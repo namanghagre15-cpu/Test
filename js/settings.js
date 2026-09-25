@@ -440,6 +440,23 @@ document.getElementById('import-json-input').addEventListener('change', async (e
   e.target.value = '';
 });
 
+/* ---------------- Optional library loader ---------------- */
+const optionalScriptPromises = new Map();
+function loadOptionalScript(src, ready) {
+  if (ready && ready()) return Promise.resolve();
+  if (optionalScriptPromises.has(src)) return optionalScriptPromises.get(src);
+  const promise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => (ready && ready()) ? resolve() : reject(new Error('Library loaded but is unavailable.'));
+    script.onerror = () => reject(new Error('Could not load optional library. Check your internet connection and try again.'));
+    document.head.appendChild(script);
+  });
+  optionalScriptPromises.set(src, promise);
+  return promise;
+}
+
 /* ---------------- Parents Export (PDF / Excel) ---------------- */
 
 let smartExportOn = true;
@@ -467,6 +484,13 @@ async function buildParentSummary() {
 }
 
 document.getElementById('export-pdf-btn').addEventListener('click', async () => {
+  try {
+    await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => !!window.jspdf);
+    await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js', () => !!window.jspdf?.API?.prototype?.autoTable);
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
   const { txs, totalIncome, totalExpense, byCategory } = await buildParentSummary();
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -586,6 +610,12 @@ document.getElementById('export-pdf-btn').addEventListener('click', async () => 
 });
 
 document.getElementById('export-excel-btn').addEventListener('click', async () => {
+  try {
+    await loadOptionalScript('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js', () => !!window.ExcelJS);
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
   const { txs, totalIncome, totalExpense, byCategory } = await buildParentSummary();
   const CRIMSON_HEX = 'FFCA0013';
   const CHARCOAL_HEX = 'FF171E19';

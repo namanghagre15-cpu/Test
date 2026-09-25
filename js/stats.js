@@ -14,20 +14,40 @@ import {
 } from './db.js';
 
 renderNav('stats');
+// Mark the page as booted before optional Chart.js is requested.
 window.__mfAppRendered = true;
+
+const CHART_JS_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4';
+let chartLoadPromise = null;
+function ensureChartJs() {
+  if (window.Chart) return Promise.resolve(true);
+  if (chartLoadPromise) return chartLoadPromise;
+  chartLoadPromise = new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = CHART_JS_URL;
+    script.async = true;
+    script.onload = () => resolve(!!window.Chart);
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+  return chartLoadPromise;
+}
 
 const CHARCOAL = '#171e19';
 const CRIMSON = '#ca0013';
 const SAGE = '#b7c6c2';
 const PALETTE = ['#ca0013', '#171e19', '#b7c6c2', '#e8a0a8', '#7c8985', '#e0d9c8', '#a45d5d', '#5d6b67'];
 
-Chart.defaults.font.family = "'Nunito', sans-serif";
-Chart.defaults.font.weight = '700';
+function setupChartDefaults() {
+  if (!window.Chart) return;
+  Chart.defaults.font.family = "'Nunito', sans-serif";
+  Chart.defaults.font.weight = '700';
+}
 
 function inkColor() {
   return getComputedStyle(document.documentElement).getPropertyValue('--color-ink').trim() || CHARCOAL;
 }
-Chart.defaults.color = inkColor();
+function setupChartColor() { if (window.Chart) Chart.defaults.color = inkColor(); }
 
 let currentPeriod = '7'; // '7' | '30' | '90' | 'all'
 let charts = {};
@@ -92,6 +112,8 @@ async function renderPeriodSummary() {
 }
 
 async function renderTrendChart() {
+  if (!(await ensureChartJs())) { document.getElementById('weekly-chart')?.closest('.bg-card')?.classList.add('hidden'); return; }
+  setupChartDefaults(); setupChartColor();
   const days = currentPeriod === 'all' ? 90 : Math.min(90, Number(currentPeriod));
   const buckets = await getDailySpendBuckets(days);
   destroyChart('weekly');
@@ -113,6 +135,8 @@ async function renderTrendChart() {
 }
 
 async function renderCategoryChart() {
+  if (!(await ensureChartJs())) { document.getElementById('category-chart')?.closest('.bg-card')?.classList.add('hidden'); return; }
+  setupChartDefaults(); setupChartColor();
   const { start, end } = getRange();
   const breakdown = await getCategoryBreakdown(start, end);
   const entries = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
@@ -154,6 +178,8 @@ async function renderCategoryChart() {
 }
 
 async function renderNeedsWants() {
+  if (!(await ensureChartJs())) { document.getElementById('needs-wants-chart')?.closest('.bg-card')?.classList.add('hidden'); return; }
+  setupChartDefaults(); setupChartColor();
   const { start, end } = getRange();
   const { need, want } = await getNeedsVsWants(start, end);
   document.getElementById('need-amount').textContent = formatINR(need);
@@ -176,6 +202,8 @@ async function renderNeedsWants() {
 }
 
 async function renderCashOnline() {
+  if (!(await ensureChartJs())) { document.getElementById('cash-online-chart')?.closest('.bg-card')?.classList.add('hidden'); return; }
+  setupChartDefaults(); setupChartColor();
   const { start, end } = getRange();
   const { cash, online } = await getCashVsOnline(start, end);
 
