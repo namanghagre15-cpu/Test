@@ -35,6 +35,7 @@ const APP_SHELL = [
   './khata.html',
   './settings.html',
   './share-target.html',
+  './privacy-policy.html',
   './manifest.json',
   './css/styles.css',
   './js/db.js',
@@ -55,10 +56,15 @@ const APP_SHELL = [
   './js/share-target.js',
   './js/notif-parser.js',
   './js/crypto-backup.js',
+  './js/pdf-logo.js',
+  './js/ai-chat.js',
+  './js/ai-tools.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-192.png',
   './icons/icon-maskable-512.png',
+  './assets/logo-horizontal.png',
+  './assets/logo-mark.png',
 ];
 
 // Every third-party library the app depends on to even boot. These are
@@ -69,7 +75,8 @@ const EXTERNAL_ASSETS = [
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js@4',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+  'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap',
 ];
 
@@ -108,6 +115,16 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      if (clients.length > 0) return clients[0].focus();
+      return self.clients.openWindow('./index.html');
+    })
   );
 });
 

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Privacy Policy · Money follow</title>
+<meta name="theme-color" content="#171e19" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
+        },
+        fontFamily: { sans: ['Nunito', 'sans-serif'] },
+        borderRadius: { '4xl': '2.5rem' },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)' },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-surface text-ink font-sans">
+
+<div class="page-shell max-w-md mx-auto px-5 pb-16">
+
+  <header class="flex items-center justify-between pt-14 pb-6">
+    <div>
+      <p class="text-[12px] uppercase tracking-widest font-bold text-sage">Money follow</p>
+      <h1 class="text-[26px] font-black leading-tight">Privacy Policy</h1>
+    </div>
+    <a href="settings.html" class="w-11 h-11 rounded-full bg-card border border-sage-soft shadow-soft flex items-center justify-center" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </a>
+  </header>
+
+  <div class="flex items-center gap-3 mb-6 bg-card rounded-3xl border border-sage-soft p-4">
+    <img src="assets/logo-mark.png" alt="Money follow" class="w-10 h-10 shrink-0" />
+    <p class="text-[12px] font-bold text-sage leading-snug">Last updated: September 2026. This app has no company, server, or account behind it — it's a personal finance tracker that runs entirely on your device.</p>
+  </div>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">The short version</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">Money follow stores everything — transactions, wallets, goals, PIN, settings — only on this device, in your browser's local storage. There is no account, no login, no backend server that your financial data is ever sent to. Nothing is sold, shared, or monetized.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">What's stored, and where</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed mb-2">All app data (transactions, wallet balances, Vault goals, Khata entries, recurring rules, receipt photos) lives in your browser's IndexedDB. Settings and your PIN's hash live in localStorage. Both are sandboxed to this site and this device/browser — clearing your browser's site data, or uninstalling the app, permanently deletes them.</p>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">Your PIN itself is never stored — only a one-way hash of it, so even inspecting the storage doesn't reveal the PIN.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">Camera use</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">The camera is used for two things, both entirely on-device: scanning a UPI QR code to pre-fill a payment, and optionally attaching a photo of a receipt to an expense. Scanned QR/payment details are never saved anywhere — they're used only to build the one-time payment link and then discarded. Receipt photos are compressed and stored locally like any other transaction data, and are included only if you attach one.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">Share-to-Add (off by default)</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">If you turn this on in Settings, you can share a bank/UPI notification text into the app to pre-fill an expense. The text is parsed entirely on-device and is never sent anywhere or written to storage — it exists only in memory for the moment it takes to show you the pre-filled entry. Messages that look like they contain an OTP or verification/security code are always ignored outright, whether or not this feature is on.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">Notifications</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">Notification permission, if you grant it, is used only to show you reminders and alerts you've enabled in Settings (e.g. a budget warning, a recurring bill due). These are triggered locally by the app while it's open or briefly in the background — nothing about your finances is transmitted to any notification server.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">Backups</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">Exporting a backup creates a JSON file on your device that you choose where to save or share. You can optionally protect it with a password — this encrypts the file (AES-256) using your browser's built-in Web Crypto API before it's saved, entirely on-device. If you set a password, remember it: it cannot be recovered by anyone, including by re-installing or contacting anyone, since there is no account system.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">Third-party code this app loads</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed mb-2">To function, the app loads a few open-source libraries from public CDNs (Dexie, Tailwind CSS, Chart.js, jsPDF, SheetJS) and a font from Google Fonts. Loading any file from the internet inherently shares your IP address and basic request metadata with that server, the same way loading any website does — none of these requests include your financial data.</p>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">This app itself does not use analytics, trackers, or advertising of any kind.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">UPI payments</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">When you pay via a UPI link (scanned or typed), the app hands the payment details to your phone's own UPI app to complete — Money follow is not a party to that transaction and has no visibility into your bank or UPI credentials at any point.</p>
+  </section>
+
+  <section class="bg-card rounded-3xl border border-sage-soft p-5 mb-4">
+    <h2 class="text-[15px] font-black mb-2">Your control</h2>
+    <p class="text-[13px] font-bold text-sage leading-relaxed">You can export or erase all your data at any time from Settings. Erasing data is immediate and permanent — there is no copy anywhere else to restore from, since none is ever kept off this device.</p>
+  </section>
+
+  <div class="flex flex-col items-center pt-4">
+    <img src="assets/logo-horizontal.png" alt="Money follow" class="h-6 opacity-70" />
+  </div>
+
+</div>
+
+</body>
+</html>

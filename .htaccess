@@ -1,0 +1,40 @@
+# ============================================================
+# .htaccess — Security headers for Money follow
+# InfinityFree runs Apache, so these headers work as-is once
+# uploaded alongside index.html at your site root. A couple of
+# these (X-Frame-Options, HSTS) genuinely can't be set from an
+# HTML <meta> tag — they only take effect as real HTTP headers,
+# which is what this file does.
+# ============================================================
+
+<IfModule mod_headers.c>
+  # Stops the app from ever being loaded inside someone else's
+  # iframe (clickjacking protection). Cannot be done via <meta>.
+  Header always set X-Frame-Options "DENY"
+
+  # Stops the browser from guessing/re-interpreting a file's type
+  # (e.g. treating an uploaded receipt image as executable script).
+  Header always set X-Content-Type-Options "nosniff"
+
+  # Sends only the origin (not the full URL/path) when navigating
+  # away to another site, so app-internal URLs aren't leaked.
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Once a browser has loaded the site over HTTPS once, force it to
+  # only ever use HTTPS for this domain for the next year. Only
+  # enable this once you've confirmed HTTPS works correctly on your
+  # InfinityFree domain — HSTS is hard to undo quickly if HTTPS is
+  # ever broken, since browsers cache this instruction.
+  # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+  # Disables legacy browser features Money follow doesn't use.
+  Header always set Permissions-Policy "geolocation=(), microphone=(), payment=(), usb=()"
+</IfModule>
+
+# Force HTTPS (InfinityFree provides free SSL — this ensures every
+# request actually uses it instead of falling back to plain HTTP).
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>

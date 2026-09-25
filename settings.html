@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Settings · Money follow</title>
 <meta name="theme-color" content="#171e19" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -39,7 +39,8 @@
 </script>
 <link rel="stylesheet" href="css/styles.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
 <body class="bg-surface text-ink font-sans" data-page="settings">
 
@@ -61,6 +62,27 @@
     <p class="text-[13px] font-bold mb-1">Your UPI ID</p>
     <p class="text-[11px] font-bold text-sage mb-3">Optional. When set, Khata reminders include a one-tap payment link pre-filled with the amount, so the other person can pay you directly from their own UPI app.</p>
     <input id="user-upi-id-input" type="text" placeholder="yourname@bank" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none text-ink" />
+  </section>
+
+  <!-- AI Assistant -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-4 flex items-center gap-2"><span class="text-crimson"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18"/></svg></span>AI Assistant</h2>
+    <p class="text-[11px] font-bold text-sage mb-4 leading-relaxed">Chat with your data using the floating button on any page. Your key is called directly from this browser to Groq or Gemini's servers — there's no backend of ours in between, so no one else ever sees it. Model names change often; leave Model blank to use a sensible current default, or set your own.</p>
+
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Provider</p>
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      <button data-ai-provider="groq" class="ai-provider-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">Groq</button>
+      <button data-ai-provider="gemini" class="ai-provider-btn py-3 rounded-2xl border border-sage-soft font-black text-[13px]">Gemini</button>
+    </div>
+
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">API Key</p>
+    <input id="ai-api-key-input" type="password" placeholder="Paste your API key" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none text-ink mb-4" />
+
+    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Model (optional)</p>
+    <input id="ai-model-input" type="text" placeholder="e.g. openai/gpt-oss-120b" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none text-ink mb-4" />
+
+    <button id="ai-save-btn" class="w-full py-3.5 rounded-2xl bg-charcoal text-white font-black text-[13px] mb-2">Save</button>
+    <p id="ai-save-status" class="hidden text-[12px] font-bold text-center text-crimson"></p>
   </section>
 
   <!-- Appearance -->
@@ -231,6 +253,12 @@
     <p class="text-[12px] font-bold text-sage mb-4">Permanently erase all transactions, wallets, and goals from this device.</p>
     <button id="wipe-data-btn" class="w-full py-3.5 rounded-2xl bg-crimson text-white font-black text-[13px]">Erase All Data</button>
   </section>
+
+  <!-- Footer branding -->
+  <div class="flex flex-col items-center pb-10 pt-2">
+    <img src="assets/logo-horizontal.png" alt="Money follow" class="h-6 opacity-70 mb-2" />
+    <a href="privacy-policy.html" class="text-[11px] font-bold text-sage underline">Privacy Policy</a>
+  </div>
 
 </div>
 
