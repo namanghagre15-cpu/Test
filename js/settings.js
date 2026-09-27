@@ -32,6 +32,8 @@ import {
   setShareToAddEnabled,
   getUserUpiId,
   setUserUpiId,
+  getUserProfile,
+  setUserProfile,
   getAIConfig,
   setAIConfig,
   getRecurringList,
@@ -53,6 +55,17 @@ import { icon } from './icons.js';
 
 renderNav('settings');
 window.__mfAppRendered = true;
+
+/* ---------------- Profile ---------------- */
+const profile = getUserProfile();
+document.getElementById('profile-name-input').value = profile.name || '';
+document.getElementById('profile-dob-input').value = profile.dob || '';
+document.getElementById('profile-save-btn').addEventListener('click', () => {
+  const name = document.getElementById('profile-name-input').value.trim();
+  const dob = document.getElementById('profile-dob-input').value;
+  setUserProfile({ name, dob });
+  alert('Saved!');
+});
 
 /* ---------------- Payment (UPI ID) ---------------- */
 const upiIdInput = document.getElementById('user-upi-id-input');
@@ -485,8 +498,8 @@ async function buildParentSummary() {
 
 document.getElementById('export-pdf-btn').addEventListener('click', async () => {
   try {
-    await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => !!window.jspdf);
-    await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js', () => !!window.jspdf?.API?.prototype?.autoTable);
+    await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => !!window.jspdf?.jsPDF);
+    await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js', () => !!window.jspdf?.jsPDF?.API?.autoTable);
   } catch (error) {
     alert(error.message);
     return;

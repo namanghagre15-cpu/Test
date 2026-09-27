@@ -60,6 +60,22 @@ export function removeLocal(key) {
 }
 
 /* ------------------------------------------------------------
+   User profile — set once during first-run onboarding. Lives
+   only in localStorage on this device, same as every other
+   setting; never leaves it.
+   ------------------------------------------------------------ */
+export function getUserProfile() {
+  return getLocal('user_profile', { name: '', dob: '' });
+}
+export function setUserProfile(profile) {
+  setLocal('user_profile', profile);
+}
+export function isOnboarded() {
+  const p = getUserProfile();
+  return !!(p.name && p.name.trim());
+}
+
+/* ------------------------------------------------------------
    Wallet helpers (Dual-Wallet Math: cash vs online)
    ------------------------------------------------------------ */
 

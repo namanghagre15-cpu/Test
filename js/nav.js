@@ -5,9 +5,16 @@
    and posts any due recurring expenses.
    ============================================================ */
 import { initAppLock } from './lock.js';
-import { runDueRecurring } from './db.js';
+import { runDueRecurring, isOnboarded } from './db.js';
 import './theme.js';
 import './ai-chat.js';
+
+// First-run gate: send a fresh install straight to onboarding before
+// anything else on the page (lock screen, nav, data) has a chance to
+// render with no name set yet.
+if (!isOnboarded() && !window.location.pathname.endsWith('onboarding.html')) {
+  window.location.replace('onboarding.html');
+} else {
 
 // Register the service worker once, from whichever page loads first.
 if ('serviceWorker' in navigator) {
@@ -23,6 +30,8 @@ initAppLock();
 
 // Silently post any recurring expenses that came due since last visit.
 runDueRecurring().catch((err) => console.warn('Recurring engine error:', err));
+
+}
 
 const ICONS = {
   home: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg>`,

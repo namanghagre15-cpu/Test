@@ -27,12 +27,15 @@ import {
   formatINR,
   formatDate,
   categoryIcon,
+  getUserProfile,
 } from './db.js';
 import { icon } from './icons.js';
 
 renderNav('dashboard');
 window.__mfAppRendered = true;
 initGhostToggle();
+
+document.getElementById('greeting-name').textContent = getUserProfile().name || 'there';
 
 const feedList = document.getElementById('feed-list');
 const feedEmpty = document.getElementById('feed-empty');
