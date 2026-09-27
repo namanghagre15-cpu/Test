@@ -32,28 +32,48 @@ const formError = document.getElementById('form-error');
 
 /* ---------------- Category selector ---------------- */
 
+const PRIMARY_CATEGORIES = ['Mess', 'Outside Food', 'Travel', 'Bills', 'Books', 'Fun'];
+const categoryMoreRow = document.getElementById('category-more-row');
+const categoryMoreBtn = document.getElementById('category-more-btn');
+let showMoreCategories = false;
+
+function createCategoryButton(cat, compact = false) {
+  const isActive = cat === selectedCategory;
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = `mf-category-pill ${isActive ? 'is-active' : ''} ${compact ? 'is-compact' : ''}`;
+  el.setAttribute('aria-pressed', String(isActive));
+  el.innerHTML = `<span class="mf-category-icon">${categoryIcon(cat, 18)}</span><span>${cat}</span>`;
+  el.addEventListener('click', () => {
+    selectedCategory = cat;
+    const remembered = recallWalletForCategory(cat);
+    if (remembered) {
+      selectedWalletType = remembered;
+      renderWalletTypeButtons();
+    }
+    renderCategories();
+  });
+  return el;
+}
+
 function renderCategories() {
   categoryRow.innerHTML = '';
-  CATEGORIES.forEach((cat) => {
-    const isActive = cat === selectedCategory;
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = `chip ${isActive ? 'chip-active' : 'chip-inactive'}`;
-    el.innerHTML = isActive
-      ? `<span class="chip-dot">${categoryIcon(cat)}</span><span class="font-black text-[13px]">${cat}</span>`
-      : `<span>${categoryIcon(cat)}</span>`;
-    el.addEventListener('click', () => {
-      selectedCategory = cat;
-      const remembered = recallWalletForCategory(cat);
-      if (remembered) {
-        selectedWalletType = remembered;
-        renderWalletTypeButtons();
-      }
-      renderCategories();
-    });
-    categoryRow.appendChild(el);
+  PRIMARY_CATEGORIES.forEach((cat) => categoryRow.appendChild(createCategoryButton(cat)));
+
+  categoryMoreRow.innerHTML = '';
+  CATEGORIES.filter((cat) => !PRIMARY_CATEGORIES.includes(cat)).forEach((cat) => {
+    categoryMoreRow.appendChild(createCategoryButton(cat, true));
   });
+  categoryMoreRow.classList.toggle('hidden', !showMoreCategories);
+  categoryMoreBtn.textContent = showMoreCategories ? 'Hide extra categories' : 'More categories';
+  categoryMoreBtn.setAttribute('aria-expanded', String(showMoreCategories));
 }
+
+categoryMoreBtn.addEventListener('click', () => {
+  showMoreCategories = !showMoreCategories;
+  renderCategories();
+  if (showMoreCategories) categoryMoreRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
 
 function renderExpenseTypeButtons() {
   document.querySelectorAll('.expense-type-btn').forEach((btn) => {
@@ -74,12 +94,20 @@ document.querySelectorAll('.expense-type-btn').forEach((btn) => {
 function renderWalletTypeButtons() {
   document.querySelectorAll('.wallet-type-btn').forEach((btn) => {
     const active = btn.dataset.walletType === selectedWalletType;
-    btn.classList.toggle('bg-charcoal', active);
-    btn.classList.toggle('text-white', active);
-    btn.classList.toggle('bg-card', !active);
-    btn.classList.toggle('text-ink', !active);
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', String(active));
   });
+
+  const badge = document.getElementById('payment-mode-badge');
+  const helper = document.getElementById('payment-helper');
+  if (badge) badge.textContent = selectedWalletType === 'online' ? 'ONLINE' : 'CASH';
+  if (helper) helper.textContent = selectedWalletType === 'online'
+    ? 'QR scan → UPI app → expense saved as pending.'
+    : 'Saved instantly to your Money Follow wallet.';
+
+  updatePrimaryAction();
 }
+
 document.querySelectorAll('.wallet-type-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     selectedWalletType = btn.dataset.walletType;
@@ -95,12 +123,10 @@ renderWalletTypeButtons();
 
 function renderAmount() {
   amountDisplay.textContent = amountStr;
-  // Auto-shrink the font size as the number gets longer so a big amount
-  // always stays on one line and inside its card instead of overflowing
-  // past the edge (previously fixed at 36px regardless of length).
   const len = amountStr.length;
-  const size = len <= 6 ? 36 : Math.max(20, 36 - (len - 6) * 2.2);
+  const size = len <= 6 ? 42 : Math.max(22, 42 - (len - 6) * 2.4);
   amountDisplay.style.fontSize = size + 'px';
+  updatePrimaryAction();
 }
 
 document.querySelectorAll('.numpad-btn').forEach((btn) => {
@@ -118,6 +144,38 @@ document.querySelectorAll('.numpad-btn').forEach((btn) => {
     renderAmount();
   });
 });
+
+document.querySelectorAll('.mf-quick-amount').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    amountStr = btn.dataset.quickAmount || '0';
+    formError.classList.add('hidden');
+    renderAmount();
+  });
+});
+
+function updatePrimaryAction() {
+  const amount = amountStr || '0';
+  const amountText = `₹${amount}`;
+  const online = selectedWalletType === 'online';
+  const label = document.getElementById('save-action-label');
+  const actionAmount = document.getElementById('save-action-amount');
+  const metaAmount = document.getElementById('action-amount-label');
+  const flowLabel = document.getElementById('action-flow-label');
+  const icon = document.getElementById('save-action-icon');
+  const button = document.getElementById('save-btn');
+  if (!button) return;
+
+  label.textContent = online ? 'Pay & Save' : 'Save Expense';
+  actionAmount.textContent = amountText;
+  metaAmount.textContent = amountText;
+  flowLabel.textContent = online
+    ? 'QR scanner → UPI app → save as pending'
+    : 'Saved directly to Money Follow';
+  button.classList.toggle('is-online', online);
+  icon.innerHTML = online
+    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><path d="M14 14h2v2M18 14h2v6h-6v-2M14 18h2"/></svg>`
+    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l4 4v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M8 4v5h7V4M8 21v-7h8v7"/></svg>`;
+}
 
 function readAmount() {
   const val = parseFloat(amountStr);
@@ -179,14 +237,14 @@ document.getElementById('receipt-remove-btn').addEventListener('click', () => {
 
 /* ---------------- Save (instant, non-pending) ---------------- */
 
-document.getElementById('save-btn').addEventListener('click', async () => {
+async function saveCashExpense() {
   const amount = readAmount();
   if (amount === null) return;
 
   await addExpense({
     amount,
     category: selectedCategory,
-    walletType: selectedWalletType,
+    walletType: 'cash',
     expenseType: selectedExpenseType,
     note: noteInput.value.trim(),
     isPending: false,
@@ -194,6 +252,20 @@ document.getElementById('save-btn').addEventListener('click', async () => {
   });
 
   window.location.href = 'index.html';
+}
+
+function launchQrFlow() {
+  decodedPayee = { pa: '', pn: '', am: '' };
+  scanModal.classList.remove('hidden');
+  startCamera();
+}
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  if (selectedWalletType === 'online') {
+    launchQrFlow();
+    return;
+  }
+  await saveCashExpense();
 });
 
 /* ---------------- SMS Clipboard Quick-Detect (real Clipboard API) ---------------- */
@@ -321,11 +393,7 @@ function openConfirmView() {
   showView(confirmView);
 }
 
-document.getElementById('scan-qr-btn').addEventListener('click', () => {
-  decodedPayee = { pa: '', pn: '', am: '' };
-  scanModal.classList.remove('hidden');
-  startCamera();
-});
+document.getElementById('scan-qr-btn').addEventListener('click', launchQrFlow);
 
 document.getElementById('qr-manual-entry-btn').addEventListener('click', () => {
   stopCamera();
