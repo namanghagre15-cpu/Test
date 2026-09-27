@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Welcome · Money follow</title>
+<meta name="theme-color" content="#171e19" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+<script>
+  try {
+    var mfDark = JSON.parse(localStorage.getItem('mf_dark_mode') || 'false');
+    document.documentElement.setAttribute('data-theme', mfDark ? 'dark' : 'light');
+  } catch (e) {}
+</script>
+<script src="js/boot-guard.js"></script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: ['selector', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          charcoal: '#171e19', crimson: '#ca0013', sage: '#b7c6c2', offwhite: '#eeebe3',
+          surface: 'var(--color-surface)', card: 'var(--color-card)', ink: 'var(--color-ink)',
+        },
+        fontFamily: { sans: ['Nunito', 'sans-serif'] },
+        borderRadius: { '4xl': '2.5rem' },
+        boxShadow: { soft: '0 20px 50px -12px rgba(0,0,0,0.08)', redglow: '0 10px 30px -5px rgba(202,0,19,0.35)' },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-surface text-ink font-sans">
+
+<div class="max-w-md mx-auto px-6 min-h-screen flex flex-col justify-between py-10">
+
+  <div>
+    <div class="flex items-center gap-2 mb-10">
+      <span id="ob-dot-1" class="ob-dot"></span>
+      <span id="ob-dot-2" class="ob-dot"></span>
+      <span id="ob-dot-3" class="ob-dot"></span>
+    </div>
+
+    <!-- Step 1: Name -->
+    <div id="ob-step-1" class="ob-step">
+      <img src="assets/logo-mark.png" alt="Money follow" class="w-14 h-14 mb-6" />
+      <h1 class="text-[26px] font-black leading-tight mb-2">What should we call you?</h1>
+      <p class="text-[13px] font-bold text-sage mb-6">This stays only on this device — just used to greet you on the dashboard.</p>
+      <input id="ob-name-input" type="text" placeholder="Your name" autocomplete="off"
+        class="w-full bg-card border border-sage-soft rounded-2xl px-4 py-3.5 text-[16px] font-bold outline-none text-ink" />
+    </div>
+
+    <!-- Step 2: DOB -->
+    <div id="ob-step-2" class="ob-step hidden">
+      <div class="w-14 h-14 rounded-3xl bg-crimson/10 flex items-center justify-center text-crimson mb-6">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
+      </div>
+      <h1 class="text-[26px] font-black leading-tight mb-2">When's your birthday?</h1>
+      <p class="text-[13px] font-bold text-sage mb-6">Optional — skip this if you'd rather not say.</p>
+      <input id="ob-dob-input" type="date" class="w-full bg-card border border-sage-soft rounded-2xl px-4 py-3.5 text-[16px] font-bold outline-none text-ink" />
+    </div>
+
+    <!-- Step 3: Done -->
+    <div id="ob-step-3" class="ob-step hidden text-center">
+      <div class="w-16 h-16 rounded-3xl bg-crimson/10 flex items-center justify-center text-crimson mb-6 mx-auto">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.3 12.3 2.6 2.6 5-5.6"/></svg>
+      </div>
+      <h1 class="text-[26px] font-black leading-tight mb-2" id="ob-done-greeting">All set!</h1>
+      <p class="text-[13px] font-bold text-sage mb-2">Your data stays only on this device — nothing is ever sent anywhere.</p>
+    </div>
+  </div>
+
+  <div>
+    <p id="ob-error" class="hidden text-[12px] font-bold text-crimson text-center mb-3"></p>
+    <div class="flex gap-3">
+      <button id="ob-back-btn" class="hidden flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Back</button>
+      <button id="ob-skip-btn" class="hidden flex-1 py-4 rounded-2xl bg-card border border-sage-soft font-black text-[14px]">Skip</button>
+      <button id="ob-next-btn" class="flex-1 py-4 rounded-2xl bg-crimson text-white font-black text-[14px] shadow-redglow">Next</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="js/onboarding.js"></script>
+</body>
+</html>

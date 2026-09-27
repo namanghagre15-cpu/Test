@@ -18,14 +18,21 @@
    yields a fully readable, cacheable 200 response), and the
    runtime handler now also accepts opaque responses as a
    fallback safety net.
+
+   v6: merged in a fix that had been sitting unused in js/sw.js
+   (nav.js only ever registered this root-level file) — installs
+   now use Promise.allSettled for optional CDN assets so a single
+   slow/broken CDN can never abort the whole install, and the
+   onboarding page/script are now part of the app shell.
    ============================================================ */
 
-const CACHE_VERSION = 'v4-local-db';
+const CACHE_VERSION = 'v6-onboarding';
 const CACHE_NAME = `money-follow-${CACHE_VERSION}`;
 
 const APP_SHELL = [
   './',
   './index.html',
+  './onboarding.html',
   './add.html',
   './wallet.html',
   './stats.html',
@@ -46,6 +53,7 @@ const APP_SHELL = [
   './js/ghost.js',
   './js/lock.js',
   './js/app.js',
+  './js/onboarding.js',
   './js/add.js',
   './js/wallet.js',
   './js/stats.js',
@@ -91,14 +99,13 @@ self.addEventListener('install', (event) => {
       // External CDN libraries are cached independently of each other so
       // one slow/unreachable CDN during install never blocks the app
       // shell (and therefore never blocks offline availability).
-      await Promise.all(
+      await Promise.allSettled(
         EXTERNAL_ASSETS.map(async (url) => {
           try {
             const res = await fetch(url, { mode: 'cors' });
             if (res && res.ok) await cache.put(url, res);
           } catch (e) {
-            // Will still get opportunistically cached on the next
-            // successful online load via the fetch handler below.
+            // Optional CDN asset; never block service-worker installation.
           }
         })
       );
