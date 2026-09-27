@@ -329,6 +329,19 @@ body {
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
+/* ---------- Onboarding ---------- */
+.ob-dot {
+  height: 4px; flex: 1; border-radius: 9999px;
+  background: rgba(183, 198, 194, 0.3);
+  transition: background 0.2s ease;
+}
+.ob-dot.active { background: #ca0013; }
+.ob-step { animation: ob-fade-in 0.25s ease-out both; }
+@keyframes ob-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ---------- QR scanner ---------- */
 .qr-video-wrap {
   position: relative;
@@ -396,15 +409,15 @@ body { min-height: 100vh; overflow-x: hidden; }
 }
 
 @media (min-width: 768px) {
-  /* Tablet: wider canvas + compact top navigation */
+  /* Tablet: wider canvas, bottom nav pill continues from mobile */
   .page-shell {
     max-width: 1120px !important;
     margin-left: auto !important;
     margin-right: auto !important;
     padding-left: 32px !important;
     padding-right: 32px !important;
-    padding-top: 76px;
-    padding-bottom: 40px;
+    padding-top: 24px;
+    padding-bottom: 110px;
   }
 
   .page-shell > header {
@@ -412,23 +425,7 @@ body { min-height: 100vh; overflow-x: hidden; }
   }
 
   .mf-tablet-nav {
-    position: fixed;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(calc(100% - 32px), 1060px);
-    height: 58px;
-    padding: 6px;
-    z-index: 80;
-    background: color-mix(in srgb, var(--color-card) 92%, transparent);
-    border: 1px solid rgba(183,198,194,.28);
-    border-radius: 22px;
-    box-shadow: 0 14px 40px rgba(0,0,0,.08);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    display: none !important;
   }
 
   .mf-tablet-nav .mf-tablet-brand {
@@ -470,8 +467,12 @@ body { min-height: 100vh; overflow-x: hidden; }
     box-shadow: 0 8px 22px rgba(202,0,19,.24);
   }
 
-  .bottom-nav-pill { display: none !important; }
   #mf-ai-fab { bottom: 20px; }
+
+  .bottom-nav-pill {
+    max-width: 420px;
+    margin: 0 auto;
+  }
 
   /* Tablet content rhythm */
   .page-shell > section,
