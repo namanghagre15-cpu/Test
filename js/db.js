@@ -164,14 +164,14 @@ export async function addIncome({ walletType, amount, note }) {
   });
 }
 
-export async function addExpense({ amount, category, walletType, expenseType, note, isPending, recurringId, receiptImage }) {
+export async function addExpense({ amount, category, walletType, expenseType, note, isPending, recurringId, receiptImage, date }) {
   const id = await db.transactions.add({
     amount,
     category,
     type: 'expense',
     walletType,
     expenseType,
-    date: new Date().toISOString(),
+    date: date || new Date().toISOString(),
     note: note || '',
     isPending: isPending ? 1 : 0,
     recurringId: recurringId || null,

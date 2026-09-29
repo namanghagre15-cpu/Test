@@ -67,6 +67,11 @@ filterMinAmount.addEventListener('input', runSearch);
 filterMaxAmount.addEventListener('input', runSearch);
 
 function openReceiptLightbox(blob) {
+  // PDF receipts open in the browser's own viewer; images use the lightbox.
+  if (blob.type === 'application/pdf') {
+    window.open(URL.createObjectURL(blob), '_blank');
+    return;
+  }
   const lightbox = document.getElementById('receipt-lightbox');
   const img = document.getElementById('receipt-lightbox-img');
   img.src = URL.createObjectURL(blob);

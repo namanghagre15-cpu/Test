@@ -52,6 +52,13 @@ import {
   formatINR,
 } from './db.js';
 import { icon } from './icons.js';
+import {
+  NOTIFICATION_TYPES,
+  getNotificationPrefs,
+  setNotificationPref,
+  getNotificationPermissionState,
+  requestNotificationPermission,
+} from './notifications.js';
 
 renderNav('settings');
 window.__mfAppRendered = true;
@@ -104,6 +111,57 @@ document.getElementById('ai-save-btn').addEventListener('click', () => {
   status.classList.add('text-sage');
   setTimeout(() => status.classList.add('hidden'), 3000);
 });
+
+/* ---------------- Notifications ---------------- */
+function renderNotificationSettings() {
+  const state = getNotificationPermissionState();
+  const label = document.getElementById('notif-permission-label');
+  const btn = document.getElementById('notif-enable-btn');
+  const typesList = document.getElementById('notif-types-list');
+
+  if (state === 'unsupported') {
+    label.textContent = "This browser doesn't support notifications";
+    btn.classList.add('hidden');
+    typesList.classList.add('hidden');
+    return;
+  }
+  if (state === 'granted') {
+    label.textContent = 'Notifications are on';
+    btn.classList.add('hidden');
+  } else if (state === 'denied') {
+    label.textContent = 'Blocked — allow notifications for this site in your browser settings';
+    btn.classList.add('hidden');
+  } else {
+    label.textContent = 'Notifications are off';
+    btn.classList.remove('hidden');
+  }
+
+  const prefs = getNotificationPrefs();
+  typesList.innerHTML = NOTIFICATION_TYPES.map(
+    (t) => `
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-[13px] font-bold">${t.label}</p>
+        <p class="text-[11px] font-bold text-sage leading-snug">${t.description}</p>
+      </div>
+      <button data-notif-type="${t.id}" class="mf-switch shrink-0 ${prefs[t.id] ? 'on' : ''}"><span class="knob"></span></button>
+    </div>`
+  ).join('');
+
+  typesList.querySelectorAll('[data-notif-type]').forEach((sw) => {
+    sw.addEventListener('click', () => {
+      const id = sw.dataset.notifType;
+      const next = !getNotificationPrefs()[id];
+      setNotificationPref(id, next);
+      sw.classList.toggle('on', next);
+    });
+  });
+}
+document.getElementById('notif-enable-btn').addEventListener('click', async () => {
+  await requestNotificationPermission();
+  renderNotificationSettings();
+});
+renderNotificationSettings();
 
 /* ---------------- Appearance switches ---------------- */
 

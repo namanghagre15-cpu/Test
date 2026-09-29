@@ -6,6 +6,7 @@
    ============================================================ */
 import { initAppLock } from './lock.js';
 import { runDueRecurring, isOnboarded } from './db.js';
+import { checkAndFireNotifications } from './notifications.js';
 import './theme.js';
 import './ai-chat.js';
 
@@ -30,6 +31,12 @@ initAppLock();
 
 // Silently post any recurring expenses that came due since last visit.
 runDueRecurring().catch((err) => console.warn('Recurring engine error:', err));
+
+// Check enabled notification conditions — cheap no-op if permission
+// isn't granted or nothing is enabled. Local-only: only ever reads this
+// device's own data, so it can never fire on someone else's behalf and
+// never depends on any name being unique (there is no shared namespace).
+checkAndFireNotifications().catch((err) => console.warn('Notification check error:', err));
 
 }
 

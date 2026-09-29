@@ -72,6 +72,14 @@ const PATHS = {
   arrowRight: `<path d="M4 12h16M14 6l6 6-6 6"/>`,
   moon: `<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/>`,
   sun: `<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.3M19.2 12h2.3M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/>`,
+  qr: `<rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><path d="M6.5 6.5h1M16.5 6.5h1M6.5 16.5h1M13.5 14h2.5v2.5M20.5 13.5v1M13.5 20.5h2M18.5 17.5h2v3h-2.5"/>`,
+  paperclip: `<path d="M20 11.5 12.2 19.3a5 5 0 0 1-7.1-7.1l8.3-8.3a3.3 3.3 0 0 1 4.7 4.7l-8.3 8.3a1.7 1.7 0 0 1-2.4-2.4l7.6-7.6"/>`,
+  scale: `<path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7 2.5 13a3 3 0 0 0 5 0L5 7ZM19 7l-2.5 6a3 3 0 0 0 5 0L19 7Z"/>`,
+  calendar: `<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>`,
+  grid: `<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>`,
+  utensils: `<path d="M7 3v7a2 2 0 0 0 2 2v9M11 3v7a2 2 0 0 1-2 2M4 3v7a2 2 0 0 0 2 2M17 21V3c-2.2 1.2-3.5 3.6-3.5 7 0 2 1 3 3.5 3"/>`,
+  coffee: `<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M7 3v2M10.5 3v2M14 3v2"/>`,
+  arrowLeft: `<path d="M20 12H4M10 6l-6 6 6 6"/>`,
   chevronRight: `<path d="m9 5.5 7 6.5-7 6.5"/>`,
   barChart: `<path d="M4 20V10M10 20V4M16 20v-7M4 20h16"/>`,
   refresh: `<path d="M4 12a8 8 0 0 1 14-5.2M20 12a8 8 0 0 1-14 5.2"/><path d="M18 3v4.5h-4.5M6 21v-4.5h4.5"/>`,
@@ -92,8 +100,8 @@ export function icon(name, size = 22) {
 
 /* ---------- Category -> icon-name map (replaces old emoji map) ---------- */
 export const CATEGORY_ICON_NAMES = {
-  Mess: 'bag',
-  'Outside Food': 'receipt',
+  Mess: 'utensils',
+  'Outside Food': 'coffee',
   Travel: 'bus',
   Books: 'book',
   Fun: 'gamepad',

@@ -244,8 +244,17 @@ const splitPersonInput = document.getElementById('split-person-input');
 function addSplitPerson(name) {
   const trimmed = name.trim();
   if (!trimmed) return;
-  if (splitPeople.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) return;
-  splitPeople.push({ name: trimmed });
+  const exists = (n) => splitPeople.some((p) => p.name.toLowerCase() === n.toLowerCase());
+  let finalName = trimmed;
+  if (exists(finalName)) {
+    // "Me" is always just one person; any other repeated name is a different
+    // real person who happens to share it, so number them instead of ignoring.
+    if (trimmed.toLowerCase() === 'me') return;
+    let n = 2;
+    while (exists(`${trimmed} (${n})`)) n++;
+    finalName = `${trimmed} (${n})`;
+  }
+  splitPeople.push({ name: finalName });
   renderPeopleChips();
   updateSplitPreview();
 }

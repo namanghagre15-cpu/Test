@@ -23,65 +23,157 @@ window.__mfAppRendered = true;
 let selectedCategory = suggestCategoryByTime();
 let selectedExpenseType = 'need';
 let selectedWalletType = recallWalletForCategory(selectedCategory) || 'cash';
-let amountStr = '0';
+let selectedDateISO = new Date().toISOString();
 
 const categoryRow = document.getElementById('category-row');
-const amountDisplay = document.getElementById('amount-display');
+const amountInput = document.getElementById('amount-input');
 const noteInput = document.getElementById('note-input');
 const formError = document.getElementById('form-error');
 
-/* ---------------- Category selector ---------------- */
+/* ---------------- Amount (real device keyboard) ---------------- */
 
-const PRIMARY_CATEGORIES = ['Mess', 'Outside Food', 'Travel', 'Bills', 'Books', 'Fun'];
-const categoryMoreRow = document.getElementById('category-more-row');
-const categoryMoreBtn = document.getElementById('category-more-btn');
-let showMoreCategories = false;
-
-function createCategoryButton(cat, compact = false) {
-  const isActive = cat === selectedCategory;
-  const el = document.createElement('button');
-  el.type = 'button';
-  el.className = `mf-category-pill ${isActive ? 'is-active' : ''} ${compact ? 'is-compact' : ''}`;
-  el.setAttribute('aria-pressed', String(isActive));
-  el.innerHTML = `<span class="mf-category-icon">${categoryIcon(cat, 18)}</span><span>${cat}</span>`;
-  el.addEventListener('click', () => {
-    selectedCategory = cat;
-    const remembered = recallWalletForCategory(cat);
-    if (remembered) {
-      selectedWalletType = remembered;
-      renderWalletTypeButtons();
-    }
-    renderCategories();
-  });
-  return el;
+function renderAmount() {
+  const len = amountInput.value.length;
+  const size = len <= 6 ? 56 : Math.max(30, 56 - (len - 6) * 3);
+  amountInput.style.fontSize = size + 'px';
+  updateSubmitLabel();
 }
+
+amountInput.addEventListener('input', () => {
+  // Digits and a single decimal point only — same intent as the old
+  // numpad, just driven by the device's own keyboard now.
+  let clean = amountInput.value.replace(/[^0-9.]/g, '');
+  const firstDot = clean.indexOf('.');
+  if (firstDot !== -1) {
+    clean = clean.slice(0, firstDot + 1) + clean.slice(firstDot + 1).replace(/\./g, '');
+  }
+  amountInput.value = clean;
+  formError.classList.add('hidden');
+  renderAmount();
+});
+
+document.querySelectorAll('.quick-chip').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const add = Number(btn.dataset.quick) || 0;
+    const current = parseFloat(amountInput.value) || 0;
+    amountInput.value = String(Math.round((current + add) * 100) / 100);
+    formError.classList.add('hidden');
+    renderAmount();
+  });
+});
+
+function readAmount() {
+  const val = parseFloat(amountInput.value);
+  if (!val || val <= 0) {
+    formError.textContent = 'Please enter a valid amount greater than 0.';
+    formError.classList.remove('hidden');
+    amountInput.focus();
+    return null;
+  }
+  formError.classList.add('hidden');
+  return Math.round(val * 100) / 100;
+}
+
+/* ---------------- Date picker ---------------- */
+
+const dateInput = document.getElementById('date-input');
+const datePillLabel = document.getElementById('date-pill-label');
+
+function formatDateLabel(iso) {
+  const d = new Date(iso);
+  const today = new Date();
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yest.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+document.getElementById('date-pill').addEventListener('click', () => {
+  if (dateInput.showPicker) dateInput.showPicker();
+  else dateInput.focus();
+});
+dateInput.value = new Date().toISOString().slice(0, 10);
+dateInput.addEventListener('change', () => {
+  if (!dateInput.value) return;
+  const chosen = new Date(dateInput.value + 'T12:00:00');
+  selectedDateISO = chosen.toISOString();
+  datePillLabel.textContent = formatDateLabel(selectedDateISO);
+});
+
+/* ---------------- Category selector (quick row + "More" sheet) ---------------- */
+
+const QUICK_CATEGORIES = [
+  { cat: 'Outside Food', label: 'Food' },
+  { cat: 'Mess', label: 'Mess' },
+  { cat: 'Travel', label: 'Travel' },
+  { cat: 'Bills', label: 'Bills' },
+  { cat: 'Books', label: 'Books' },
+];
 
 function renderCategories() {
-  categoryRow.innerHTML = '';
-  PRIMARY_CATEGORIES.forEach((cat) => categoryRow.appendChild(createCategoryButton(cat)));
+  const inQuick = QUICK_CATEGORIES.some((q) => q.cat === selectedCategory);
+  const tiles = QUICK_CATEGORIES.map(
+    (q) => `
+    <button type="button" class="cat-tile ${selectedCategory === q.cat ? 'active' : ''}" data-cat="${q.cat}">
+      <span class="cat-ico">${categoryIcon(q.cat, 22)}</span>
+      <span class="cat-label">${q.label}</span>
+    </button>`
+  );
+  const moreLabel = inQuick ? 'More' : selectedCategory;
+  const moreIcon = inQuick
+    ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg>`
+    : categoryIcon(selectedCategory, 22);
+  tiles.push(`
+    <button type="button" id="cat-more-btn" class="cat-tile ${!inQuick ? 'active' : ''}">
+      <span class="cat-ico">${moreIcon}</span>
+      <span class="cat-label">${moreLabel}</span>
+    </button>`);
+  categoryRow.innerHTML = tiles.join('');
 
-  categoryMoreRow.innerHTML = '';
-  CATEGORIES.filter((cat) => !PRIMARY_CATEGORIES.includes(cat)).forEach((cat) => {
-    categoryMoreRow.appendChild(createCategoryButton(cat, true));
+  categoryRow.querySelectorAll('[data-cat]').forEach((el) => {
+    el.addEventListener('click', () => selectCategory(el.dataset.cat));
   });
-  categoryMoreRow.classList.toggle('hidden', !showMoreCategories);
-  categoryMoreBtn.textContent = showMoreCategories ? 'Hide extra categories' : 'More categories';
-  categoryMoreBtn.setAttribute('aria-expanded', String(showMoreCategories));
+  document.getElementById('cat-more-btn').addEventListener('click', openCatSheet);
 }
 
-categoryMoreBtn.addEventListener('click', () => {
-  showMoreCategories = !showMoreCategories;
+function selectCategory(cat) {
+  selectedCategory = cat;
+  const remembered = recallWalletForCategory(cat);
+  if (remembered) {
+    selectedWalletType = remembered;
+    renderWalletTypeButtons();
+  }
   renderCategories();
-  if (showMoreCategories) categoryMoreRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+const catSheet = document.getElementById('cat-sheet');
+function openCatSheet() {
+  const grid = document.getElementById('cat-sheet-grid');
+  grid.innerHTML = CATEGORIES.map(
+    (cat) => `
+    <button type="button" class="cat-tile ${selectedCategory === cat ? 'active' : ''}" data-cat="${cat}">
+      <span class="cat-ico">${categoryIcon(cat, 22)}</span>
+      <span class="cat-label">${cat}</span>
+    </button>`
+  ).join('');
+  grid.querySelectorAll('[data-cat]').forEach((el) => {
+    el.addEventListener('click', () => {
+      selectCategory(el.dataset.cat);
+      catSheet.classList.add('hidden');
+    });
+  });
+  catSheet.classList.remove('hidden');
+}
+document.getElementById('cat-sheet-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'cat-sheet-overlay') catSheet.classList.add('hidden');
 });
+
+/* ---------------- Need / Want toggle ---------------- */
 
 function renderExpenseTypeButtons() {
   document.querySelectorAll('.expense-type-btn').forEach((btn) => {
-    const active = btn.dataset.expenseType === selectedExpenseType;
-    btn.classList.toggle('bg-charcoal', active);
-    btn.classList.toggle('text-white', active);
-    btn.classList.toggle('bg-card', !active);
-    btn.classList.toggle('text-ink', !active);
+    btn.classList.toggle('active', btn.dataset.expenseType === selectedExpenseType);
   });
 }
 document.querySelectorAll('.expense-type-btn').forEach((btn) => {
@@ -91,104 +183,71 @@ document.querySelectorAll('.expense-type-btn').forEach((btn) => {
   });
 });
 
+/* ---------------- Paid with (Cash / Online) ---------------- */
+
 function renderWalletTypeButtons() {
-  document.querySelectorAll('.wallet-type-btn').forEach((btn) => {
-    const active = btn.dataset.walletType === selectedWalletType;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-pressed', String(active));
+  document.querySelectorAll('.paid-opt').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.walletType === selectedWalletType);
   });
-
-  const badge = document.getElementById('payment-mode-badge');
-  const helper = document.getElementById('payment-helper');
-  if (badge) badge.textContent = selectedWalletType === 'online' ? 'ONLINE' : 'CASH';
-  if (helper) helper.textContent = selectedWalletType === 'online'
-    ? 'QR scan → UPI app → expense saved as pending.'
-    : 'Saved instantly to your Money Follow wallet.';
-
-  updatePrimaryAction();
+  document.getElementById('online-flow').classList.toggle('hidden', selectedWalletType !== 'online');
+  updateSubmitLabel();
 }
-
-document.querySelectorAll('.wallet-type-btn').forEach((btn) => {
+document.querySelectorAll('.paid-opt').forEach((btn) => {
   btn.addEventListener('click', () => {
     selectedWalletType = btn.dataset.walletType;
     renderWalletTypeButtons();
   });
 });
 
+/* ---------------- Submit button (single CTA, behavior depends on Paid with) ---------------- */
+
+const submitBtn = document.getElementById('submit-btn');
+const submitLabel = document.getElementById('submit-label');
+const submitIcon = document.getElementById('submit-icon');
+
+function updateSubmitLabel() {
+  const amt = parseFloat(amountInput.value) || 0;
+  const shown = amt > 0 ? amt : 0;
+  if (selectedWalletType === 'online') {
+    submitLabel.textContent = `Pay & Save · ₹${shown}`;
+    submitIcon.classList.remove('hidden');
+  } else {
+    submitLabel.textContent = `Save Expense · ₹${shown}`;
+    submitIcon.classList.add('hidden');
+  }
+}
+
+submitBtn.addEventListener('click', async () => {
+  const amount = readAmount();
+  if (amount === null) return;
+
+  if (selectedWalletType === 'online') {
+    decodedPayee = { pa: '', pn: '', am: String(amount) };
+    scanModal.classList.remove('hidden');
+    startCamera();
+    return;
+  }
+
+  await addExpense({
+    amount,
+    category: selectedCategory,
+    walletType: selectedWalletType,
+    expenseType: selectedExpenseType,
+    note: noteInput.value.trim(),
+    isPending: false,
+    receiptImage: receiptBlob,
+    date: selectedDateISO,
+  });
+
+  window.location.href = 'index.html';
+});
+
 renderCategories();
 renderExpenseTypeButtons();
 renderWalletTypeButtons();
+renderAmount();
 
-/* ---------------- Numpad ---------------- */
-
-function renderAmount() {
-  amountDisplay.textContent = amountStr;
-  const len = amountStr.length;
-  const size = len <= 6 ? 42 : Math.max(22, 42 - (len - 6) * 2.4);
-  amountDisplay.style.fontSize = size + 'px';
-  updatePrimaryAction();
-}
-
-document.querySelectorAll('.numpad-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const key = btn.dataset.key;
-    formError.classList.add('hidden');
-    if (key === 'back') {
-      amountStr = amountStr.length > 1 ? amountStr.slice(0, -1) : '0';
-    } else if (key === '.') {
-      if (!amountStr.includes('.')) amountStr += '.';
-    } else {
-      if (amountStr === '0') amountStr = key;
-      else if (amountStr.length < 9) amountStr += key;
-    }
-    renderAmount();
-  });
-});
-
-document.querySelectorAll('.mf-quick-amount').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    amountStr = btn.dataset.quickAmount || '0';
-    formError.classList.add('hidden');
-    renderAmount();
-  });
-});
-
-function updatePrimaryAction() {
-  const amount = amountStr || '0';
-  const amountText = `₹${amount}`;
-  const online = selectedWalletType === 'online';
-  const label = document.getElementById('save-action-label');
-  const actionAmount = document.getElementById('save-action-amount');
-  const metaAmount = document.getElementById('action-amount-label');
-  const flowLabel = document.getElementById('action-flow-label');
-  const icon = document.getElementById('save-action-icon');
-  const button = document.getElementById('save-btn');
-  if (!button) return;
-
-  label.textContent = online ? 'Pay & Save' : 'Save Expense';
-  actionAmount.textContent = amountText;
-  metaAmount.textContent = amountText;
-  flowLabel.textContent = online
-    ? 'QR scanner → UPI app → save as pending'
-    : 'Saved directly to Money Follow';
-  button.classList.toggle('is-online', online);
-  icon.innerHTML = online
-    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><path d="M14 14h2v2M18 14h2v6h-6v-2M14 18h2"/></svg>`
-    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l4 4v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M8 4v5h7V4M8 21v-7h8v7"/></svg>`;
-}
-
-function readAmount() {
-  const val = parseFloat(amountStr);
-  if (!val || val <= 0) {
-    formError.textContent = 'Please enter a valid amount greater than 0.';
-    formError.classList.remove('hidden');
-    return null;
-  }
-  formError.classList.add('hidden');
-  return Math.round(val * 100) / 100;
-}
-
-/* ---------------- Receipt photo (optional, compressed client-side) ---------------- */
+/* ---------------- Receipt (photo OR PDF, compressed client-side) ---------------- */
 let receiptBlob = null;
 
 function resizeImageToBlob(file, maxDim = 900, quality = 0.72) {
@@ -222,8 +281,20 @@ function resizeImageToBlob(file, maxDim = 900, quality = 0.72) {
 document.getElementById('receipt-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  receiptBlob = await resizeImageToBlob(file);
-  document.getElementById('receipt-preview-img').src = URL.createObjectURL(receiptBlob);
+  const img = document.getElementById('receipt-preview-img');
+  const pdfBadge = document.getElementById('receipt-pdf-badge');
+  if (file.type === 'application/pdf') {
+    receiptBlob = file;
+    img.style.display = 'none';
+    pdfBadge.style.display = 'flex';
+    document.getElementById('receipt-sub').textContent = file.name;
+  } else {
+    receiptBlob = await resizeImageToBlob(file);
+    img.src = URL.createObjectURL(receiptBlob);
+    img.style.display = 'block';
+    pdfBadge.style.display = 'none';
+    document.getElementById('receipt-sub').textContent = 'Photo attached';
+  }
   document.getElementById('receipt-empty-row').classList.add('hidden');
   document.getElementById('receipt-preview-row').classList.remove('hidden');
 });
@@ -231,41 +302,9 @@ document.getElementById('receipt-input').addEventListener('change', async (e) =>
 document.getElementById('receipt-remove-btn').addEventListener('click', () => {
   receiptBlob = null;
   document.getElementById('receipt-input').value = '';
+  document.getElementById('receipt-sub').textContent = 'Snap a photo or pick a PDF';
   document.getElementById('receipt-empty-row').classList.remove('hidden');
   document.getElementById('receipt-preview-row').classList.add('hidden');
-});
-
-/* ---------------- Save (instant, non-pending) ---------------- */
-
-async function saveCashExpense() {
-  const amount = readAmount();
-  if (amount === null) return;
-
-  await addExpense({
-    amount,
-    category: selectedCategory,
-    walletType: 'cash',
-    expenseType: selectedExpenseType,
-    note: noteInput.value.trim(),
-    isPending: false,
-    receiptImage: receiptBlob,
-  });
-
-  window.location.href = 'index.html';
-}
-
-function launchQrFlow() {
-  decodedPayee = { pa: '', pn: '', am: '' };
-  scanModal.classList.remove('hidden');
-  startCamera();
-}
-
-document.getElementById('save-btn').addEventListener('click', async () => {
-  if (selectedWalletType === 'online') {
-    launchQrFlow();
-    return;
-  }
-  await saveCashExpense();
 });
 
 /* ---------------- SMS Clipboard Quick-Detect (real Clipboard API) ---------------- */
@@ -389,11 +428,9 @@ function handleDecodedText(text) {
 function openConfirmView() {
   document.getElementById('qr-payee-line').textContent = `Paying ${decodedPayee.pn || decodedPayee.pa} (${decodedPayee.pa})`;
   const amountField = document.getElementById('qr-confirm-amount');
-  amountField.value = decodedPayee.am || (amountStr !== '0' ? amountStr : '');
+  amountField.value = decodedPayee.am || (parseFloat(amountInput.value) > 0 ? amountInput.value : '');
   showView(confirmView);
 }
-
-document.getElementById('scan-qr-btn').addEventListener('click', launchQrFlow);
 
 document.getElementById('qr-manual-entry-btn').addEventListener('click', () => {
   stopCamera();
