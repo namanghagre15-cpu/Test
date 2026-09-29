@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
 <title>Add Expense · Money follow</title>
 <meta name="theme-color" content="#171e19" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://api.groq.com https://generativelanguage.googleapis.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
@@ -45,137 +45,121 @@
 <link rel="stylesheet" href="css/styles.css" />
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
-<body class="bg-surface text-ink font-sans" data-page="add">
+<body class="bg-surface text-ink font-sans add-flow" data-page="add">
 
-<div class="page-shell max-w-md mx-auto px-5">
+<div class="page-shell add-shell">
+ <div class="add-wrap px-5">
 
-  <header class="mf-add-header">
-    <div class="mf-add-brand-block">
-      <div class="mf-add-brand-mark"><img src="assets/logo-mark.png" alt="Money Follow" /></div>
-      <div>
-        <p class="mf-add-kicker">MONEY FOLLOW</p>
-        <h1>Add Expense</h1>
-      </div>
+  <header class="flex items-center justify-between pt-6 pb-5">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="add-icon-btn" aria-label="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></svg></a>
+      <h1 class="text-[22px] font-black leading-tight">Add Expense</h1>
     </div>
-    <div class="mf-add-header-actions">
-      <a href="settings.html" class="mf-icon-btn" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2.06 2.06 0 1 1-2.92 2.92l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V19.6a2.06 2.06 0 1 1-4.12 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2.06 2.06 0 1 1-2.92-2.92l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H4.4a2.06 2.06 0 1 1 0-4.12h.09A1.7 1.7 0 0 0 6.05 6.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2.06 2.06 0 1 1 2.92-2.92l.06.06a1.7 1.7 0 0 0 1.87.34H10.6A1.7 1.7 0 0 0 11.63 1H11.7a2.06 2.06 0 1 1 4.12 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2.06 2.06 0 1 1 2.92 2.92l-.06.06a1.7 1.7 0 0 0-.34 1.87v.06a1.7 1.7 0 0 0 1.56 1.03h.09a2.06 2.06 0 1 1 0 4.12h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/></svg></a>
-      <a href="index.html" class="mf-icon-btn" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
-    </div>
+    <a href="settings.html" class="add-icon-btn" aria-label="Settings"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2.06 2.06 0 1 1-2.92 2.92l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V19.6a2.06 2.06 0 1 1-4.12 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2.06 2.06 0 1 1-2.92-2.92l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H4.4a2.06 2.06 0 1 1 0-4.12h.09A1.7 1.7 0 0 0 6.05 6.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2.06 2.06 0 1 1 2.92-2.92l.06.06a1.7 1.7 0 0 0 1.87.34H10.6A1.7 1.7 0 0 0 11.63 1H11.7a2.06 2.06 0 1 1 4.12 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2.06 2.06 0 1 1 2.92 2.92l-.06.06a1.7 1.7 0 0 0-.34 1.87v.06a1.7 1.7 0 0 0 1.56 1.03h.09a2.06 2.06 0 1 1 0 4.12h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/></svg></a>
   </header>
 
-  <!-- Branded quick category row -->
-  <section class="mf-add-category-section">
-    <div class="mf-section-heading-row">
-      <div>
-        <p class="mf-section-kicker">CATEGORY</p>
-        <p class="mf-section-helper">Tap once to pick where it belongs.</p>
-      </div>
-      <button id="category-more-btn" type="button" class="mf-inline-link">More categories</button>
+  <!-- Amount card -->
+  <section class="add-card mb-6">
+    <div class="flex items-center justify-between gap-3">
+      <label for="amount-input" class="text-[14px] font-bold text-ink-soft">How much did you spend?</label>
+      <button id="date-pill" type="button" class="date-pill" aria-label="Change date"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg><span id="date-pill-label">Today</span></button>
+      <input id="date-input" type="date" class="date-input-hidden" tabindex="-1" aria-hidden="true" />
     </div>
-    <div id="category-row" class="mf-category-row scrollbar-hide"></div>
-    <div id="category-more-row" class="mf-category-more-row hidden"></div>
+    <div class="amount-line">
+      <span class="amount-rupee">₹</span>
+      <input id="amount-input" type="text" inputmode="decimal" enterkeyhint="done" placeholder="0" autocomplete="off" class="amount-input" aria-label="Amount in rupees" />
+    </div>
+    <div class="grid grid-cols-4 gap-2.5 mb-4">
+      <button type="button" class="quick-chip" data-quick="50">+50</button>
+      <button type="button" class="quick-chip" data-quick="100">+100</button>
+      <button type="button" class="quick-chip" data-quick="200">+200</button>
+      <button type="button" class="quick-chip" data-quick="500">+500</button>
+    </div>
+    <button id="clipboard-detect-btn" type="button" class="clip-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4.5" width="12" height="16" rx="1.5"/><rect x="9" y="2.5" width="6" height="3.5" rx="1"/><path d="M9 11.5h6M9 15h6"/></svg><span>Detect from Clipboard</span></button>
   </section>
 
-  <!-- Numpad-first Amount Entry -->
-  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5 relative overflow-hidden">
-    <div class="decor-blob"></div>
-    <div class="relative z-10">
-      <div class="flex items-center justify-between mb-4">
-        <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Amount</p>
-        <button id="clipboard-detect-btn" class="text-[11px] font-black text-crimson flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4.5" width="12" height="16" rx="1.5"/><rect x="9" y="2.5" width="6" height="3.5" rx="1"/><path d="M9 11.5h6M9 15h6"/></svg>Detect from Clipboard</button>
-      </div>
-      <div class="mf-amount-display-row">
-        <div class="mf-amount-value"><span>₹</span><p id="amount-display">0</p></div>
-        <div class="mf-amount-caption">Enter the exact amount</div>
-      </div>
+  <!-- Category -->
+  <p class="add-label">Category</p>
+  <div id="category-row" class="cat-row mb-6"></div>
 
-      <div class="mf-quick-amounts" aria-label="Quick amounts">
-        <button type="button" class="mf-quick-amount" data-quick-amount="100">₹100</button>
-        <button type="button" class="mf-quick-amount" data-quick-amount="200">₹200</button>
-        <button type="button" class="mf-quick-amount" data-quick-amount="500">₹500</button>
-        <button type="button" class="mf-quick-amount" data-quick-amount="1000">₹1,000</button>
-      </div>
+  <!-- Paid with -->
+  <p class="add-label">Paid with</p>
+  <div class="paid-toggle mb-5" role="group" aria-label="Paid with">
+    <button type="button" data-wallet-type="cash" class="paid-opt">
+      <span class="paid-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg></span>
+      <span class="text-left"><span class="block text-[15px] font-black leading-tight">Cash</span><span class="block text-[12px] font-semibold text-sage">Paid in hand</span></span>
+    </button>
+    <button type="button" data-wallet-type="online" class="paid-opt">
+      <span class="paid-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><path d="M6.5 6.5h1M16.5 6.5h1M6.5 16.5h1M13.5 14h2.5v2.5M20.5 13.5v1M13.5 20.5h2M18.5 17.5h2v3h-2.5"/></svg></span>
+      <span class="text-left"><span class="block text-[15px] font-black leading-tight">Online</span><span class="block text-[12px] font-semibold text-sage">Scan &amp; pay UPI</span></span>
+    </button>
+  </div>
 
-      <!-- Calculator-style Numpad -->
-      <div class="numpad-grid mb-5">
-        <button data-key="1" class="numpad-btn">1</button>
-        <button data-key="2" class="numpad-btn">2</button>
-        <button data-key="3" class="numpad-btn">3</button>
-        <button data-key="4" class="numpad-btn">4</button>
-        <button data-key="5" class="numpad-btn">5</button>
-        <button data-key="6" class="numpad-btn">6</button>
-        <button data-key="7" class="numpad-btn">7</button>
-        <button data-key="8" class="numpad-btn">8</button>
-        <button data-key="9" class="numpad-btn">9</button>
-        <button data-key="." class="numpad-btn">.</button>
-        <button data-key="0" class="numpad-btn">0</button>
-        <button data-key="back" class="numpad-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H9l-6.5-8Z"/><path d="m11.5 9.5 5 5m0-5-5 5"/></svg></button>
+  <!-- Receipt / Need-Want / Note -->
+  <section class="add-card add-rows mb-4">
+    <div class="add-row">
+      <span class="row-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5 12.2 19.3a5 5 0 0 1-7.1-7.1l8.3-8.3a3.3 3.3 0 0 1 4.7 4.7l-8.3 8.3a1.7 1.7 0 0 1-2.4-2.4l7.6-7.6"/></svg></span>
+      <div class="min-w-0 flex-1">
+        <p class="text-[15px] font-black leading-tight">Attach Receipt</p>
+        <p id="receipt-sub" class="text-[12px] font-semibold text-sage truncate">Snap a photo or pick a PDF</p>
       </div>
-
-      <!-- Need vs Want toggle -->
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Was this a...</p>
-      <div class="grid grid-cols-2 gap-3 mb-5">
-        <button data-expense-type="need" class="expense-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5a2.7 2.7 0 0 1 2.5 1.7A2.7 2.7 0 1 1 9.3 10a3 3 0 0 0-1.8 2.8 3 3 0 0 0 1.5 2.6 2.8 2.8 0 1 0 5-1.8V6.6a2.7 2.7 0 1 1 3.2 3.9A3 3 0 0 1 19 13.3v.2a3 3 0 0 1-1.7 5.4 2.8 2.8 0 0 1-5.1 1.4 2.8 2.8 0 0 1-5-1.7 3 3 0 0 1-1.7-5.2 3 3 0 0 1 1.2-5.6A2.7 2.7 0 0 1 9.5 4.5Z"/></svg>Need</button>
-        <button data-expense-type="want" class="expense-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18"/></svg>Want</button>
-      </div>
-
-      <!-- Wallet / payment method -->
-      <div class="mf-payment-heading-row">
-        <div>
-          <p class="mf-section-kicker">PAYMENT METHOD</p>
-          <p id="payment-helper" class="mf-section-helper">Choose where this expense was paid from.</p>
-        </div>
-        <span class="mf-payment-badge" id="payment-mode-badge">CASH</span>
-      </div>
-      <div class="mf-payment-toggle mb-5">
-        <button data-wallet-type="cash" class="wallet-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M5.5 9v0M18.5 15v0"/></svg>Cash</button>
-        <button data-wallet-type="online" class="wallet-type-btn py-3 rounded-2xl border border-sage-soft font-black text-[14px] flex items-center justify-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>Online</button>
-      </div>
-
-      <!-- Note -->
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Note (optional)</p>
-      <input id="note-input" type="text" placeholder="e.g. Canteen lunch with friends"
-        class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-3 text-[14px] font-semibold outline-none placeholder:text-sage text-ink mb-4" />
-
-      <!-- Receipt photo -->
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Receipt (optional)</p>
       <div id="receipt-empty-row">
-        <label class="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border border-dashed border-sage-soft font-black text-[12px] text-sage cursor-pointer">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h1.7l1-1.6A1.5 1.5 0 0 1 9.5 4.6h5a1.5 1.5 0 0 1 1.3.8l1 1.6h1.7A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"/><circle cx="12" cy="13" r="3.4"/></svg>
-          Attach receipt
-          <input id="receipt-input" type="file" accept="image/*" capture="environment" class="hidden" />
+        <label class="row-action cursor-pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>Add</span>
+          <input id="receipt-input" type="file" accept="image/*,application/pdf" class="hidden" />
         </label>
       </div>
-      <div id="receipt-preview-row" class="hidden relative w-24 h-24">
-        <img id="receipt-preview-img" class="w-24 h-24 rounded-2xl object-cover border border-sage-soft" />
-        <button id="receipt-remove-btn" type="button" aria-label="Remove receipt photo"
-          class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-crimson text-white flex items-center justify-center">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
+      <div id="receipt-preview-row" class="hidden">
+        <div class="flex items-center gap-2">
+          <img id="receipt-preview-img" style="display:none" alt="Receipt" class="w-9 h-9 rounded-lg object-cover border border-sage-soft" />
+          <span id="receipt-pdf-badge" class="w-9 h-9 rounded-lg bg-sage/20 items-center justify-center text-ink-soft" style="display:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/></svg></span>
+          <button id="receipt-remove-btn" type="button" aria-label="Remove receipt" class="w-8 h-8 rounded-full bg-crimson/10 text-crimson flex items-center justify-center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </div>
       </div>
+    </div>
+    <div class="add-row">
+      <span class="row-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7 2.5 13a3 3 0 0 0 5 0L5 7ZM19 7l-2.5 6a3 3 0 0 0 5 0L19 7Z"/></svg></span>
+      <div class="min-w-0 flex-1">
+        <p class="text-[15px] font-black leading-tight">Need or Want</p>
+        <p class="text-[12px] font-semibold text-sage">Shapes your monthly insights</p>
+      </div>
+      <div class="nw-toggle" role="group" aria-label="Need or Want">
+        <button type="button" data-expense-type="need" class="expense-type-btn">Need</button>
+        <button type="button" data-expense-type="want" class="expense-type-btn">Want</button>
+      </div>
+    </div>
+    <div class="add-row">
+      <span class="row-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10.6-10.6a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg></span>
+      <input id="note-input" type="text" placeholder="Add a note (optional)" autocomplete="off" class="note-input" />
     </div>
   </section>
 
-  <!-- Sticky primary action: Cash = Save, Online = Pay & Save -->
-  <section class="mf-add-actions">
-    <div class="mf-add-action-meta">
-      <div class="mf-action-route">
-        <span class="mf-route-dot"></span>
-        <span id="action-flow-label">Saved directly to Money Follow</span>
-      </div>
-      <span id="action-amount-label" class="mf-action-amount">₹0</span>
+  <p id="form-error" class="hidden text-center text-[12px] font-bold text-crimson mb-3"></p>
+
+  <!-- Sticky action bar -->
+  <div class="add-bar">
+    <div id="online-flow" class="flow-hint hidden">
+      <span class="flow-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><path d="M13.5 14h2.5v2.5M20.5 13.5v1M13.5 20.5h2"/></svg>QR Scanner</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.5 7 6.5-7 6.5"/></svg>
+      <span class="flow-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>UPI app</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.5 7 6.5-7 6.5"/></svg>
+      <span class="flow-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.3 12.3 2.6 2.6 5-5.6"/></svg>Saved</span>
     </div>
-    <button id="save-btn" class="mf-primary-action" type="button">
-      <span id="save-action-icon"></span>
-      <span id="save-action-label">Save Expense</span>
-      <span class="mf-primary-divider">·</span>
-      <span id="save-action-amount">₹0</span>
+    <button id="submit-btn" type="button" class="save-cta">
+      <span id="submit-icon" class="hidden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><path d="M6.5 6.5h1M16.5 6.5h1M6.5 16.5h1M13.5 14h2.5v2.5M20.5 13.5v1M13.5 20.5h2M18.5 17.5h2v3h-2.5"/></svg></span>
+      <span id="submit-label">Save Expense · ₹0</span>
     </button>
-    <button id="scan-qr-btn" type="button" class="hidden" aria-hidden="true" tabindex="-1">Scan QR &amp; Pay via UPI</button>
-  </section>
+  </div>
 
-  <p id="form-error" class="hidden text-center text-[12px] font-bold text-crimson mt-4"></p>
+ </div>
+</div>
 
+<!-- All categories sheet -->
+<div id="cat-sheet" class="hidden">
+  <div class="sheet-overlay" id="cat-sheet-overlay">
+    <div class="sheet-panel">
+      <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-4"></div>
+      <p class="font-black text-[16px] mb-4 text-center">All categories</p>
+      <div id="cat-sheet-grid" class="grid grid-cols-3 gap-3 mb-2"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Real QR Scanner Modal -->

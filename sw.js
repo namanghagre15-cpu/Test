@@ -26,7 +26,7 @@
    onboarding page/script are now part of the app shell.
    ============================================================ */
 
-const CACHE_VERSION = 'v6-onboarding';
+const CACHE_VERSION = 'v8-add-redesign';
 const CACHE_NAME = `money-follow-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -63,6 +63,7 @@ const APP_SHELL = [
   './js/settings.js',
   './js/share-target.js',
   './js/notif-parser.js',
+  './js/notifications.js',
   './js/crypto-backup.js',
   './js/pdf-logo.js',
   './js/ai-chat.js',

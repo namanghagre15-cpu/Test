@@ -91,6 +91,19 @@
     <p id="ai-save-status" class="hidden text-[12px] font-bold text-center text-crimson"></p>
   </section>
 
+  <!-- Notifications -->
+  <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
+    <h2 class="text-[16px] font-black mb-2 flex items-center gap-2"><span class="text-crimson"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5a5.5 5.5 0 0 1 5.5 5.5v6h-11v-6A5.5 5.5 0 0 1 12 2.5Z"/><path d="M4.5 14h15M6 14v3M18 14v3"/><path d="M4.5 20.5h15"/></svg></span>Notifications</h2>
+    <p class="text-[11px] font-bold text-sage mb-4 leading-relaxed" id="notif-honesty-note">This app has no server, so notifications only fire while it's open or was recently in the background — not while your phone has been fully off for days, the way a bank app can. Everything here reads only this device's own data.</p>
+
+    <div id="notif-permission-row" class="flex items-center justify-between bg-sage/10 rounded-2xl px-4 py-3 mb-4">
+      <p class="text-[12px] font-bold" id="notif-permission-label">Notifications are off</p>
+      <button id="notif-enable-btn" class="py-2 px-3 rounded-xl bg-charcoal text-white font-black text-[11px]">Enable</button>
+    </div>
+
+    <div id="notif-types-list" class="space-y-3"></div>
+  </section>
+
   <!-- Appearance -->
   <section class="bg-card rounded-4xl shadow-soft p-6 mb-5">
     <h2 class="text-[16px] font-black mb-4 flex items-center gap-2"><span class="text-crimson"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="8.2" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.8" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="9.5" cy="15" r="1.1" fill="currentColor" stroke="none"/><path d="M12 21a9 9 0 0 1 0-18c1 3 3 2.5 3 5.5 0 2 3 1 5 3a9 9 0 0 1-8 9.5Z"/></svg></span>Appearance</h2>
