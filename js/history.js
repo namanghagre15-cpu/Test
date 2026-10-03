@@ -2,6 +2,7 @@
    history.js — Transaction History: search, filter, edit, delete
    ============================================================ */
 import { renderNav, showToast } from './nav.js';
+import { alertDialog } from './dialog.js';
 import { initGhostToggle, setMoneyText } from './ghost.js';
 import {
   searchTransactions,
@@ -213,7 +214,7 @@ document.getElementById('edit-cancel-btn').addEventListener('click', () => editM
 document.getElementById('edit-save-btn').addEventListener('click', async () => {
   const amount = parseFloat(document.getElementById('edit-amount').value);
   if (!amount || amount <= 0) {
-    alert('Please enter a valid amount.');
+    await alertDialog('Please enter a valid amount.');
     return;
   }
   await updateTransaction(editingId, {

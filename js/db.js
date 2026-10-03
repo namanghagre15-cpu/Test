@@ -76,6 +76,26 @@ export function isOnboarded() {
 }
 
 /* ------------------------------------------------------------
+   Chillar — editable one-tap quick-add presets on the dashboard.
+   Each preset is {label, amount, category}; wallet defaults to
+   whichever wallet is remembered for that category (cash if none).
+   ------------------------------------------------------------ */
+const DEFAULT_CHILLAR_PRESETS = [
+  { label: '+₹5 Xerox', amount: 5, category: 'Photostat' },
+  { label: '+₹10 Chai', amount: 10, category: 'Outside Food' },
+  { label: '+₹20 Auto', amount: 20, category: 'Travel' },
+  { label: '+₹15 Printout', amount: 15, category: 'Photostat' },
+  { label: '+₹30 Mess Extra', amount: 30, category: 'Mess' },
+];
+
+export function getChillarPresets() {
+  return getLocal('chillar_presets', DEFAULT_CHILLAR_PRESETS);
+}
+export function setChillarPresets(presets) {
+  setLocal('chillar_presets', presets);
+}
+
+/* ------------------------------------------------------------
    Wallet helpers (Dual-Wallet Math: cash vs online)
    ------------------------------------------------------------ */
 

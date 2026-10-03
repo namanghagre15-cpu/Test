@@ -5,6 +5,7 @@
    pre-filled — genuinely functional, not a mockup.
    ============================================================ */
 import { renderNav } from './nav.js';
+import { alertDialog, confirmDialog } from './dialog.js';
 import {
   addLedgerEntry,
   getLedgerEntries,
@@ -159,7 +160,7 @@ async function renderLedgerList() {
   });
   list.querySelectorAll('[data-delete-ledger]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this entry?')) {
+      if (await confirmDialog('Delete this entry?', { danger: true, okLabel: 'Delete' })) {
         await deleteLedgerEntry(Number(btn.dataset.deleteLedger));
         await renderEverything();
       }
@@ -187,7 +188,7 @@ async function renderLedgerList() {
           btn.innerHTML = icon('send', 13);
         }, 1500);
       } catch (e) {
-        alert(link);
+        await alertDialog(link, { title: 'Payment link' });
       }
     });
   });

@@ -28,8 +28,14 @@ import {
   formatDate,
   categoryIcon,
   getUserProfile,
+  getChillarPresets,
+  setChillarPresets,
+  CATEGORIES,
+  getLedgerTotals,
+  getLedgerEntries,
 } from './db.js';
 import { icon } from './icons.js';
+import { confirmDialog } from './dialog.js';
 
 renderNav('dashboard');
 window.__mfAppRendered = true;
@@ -40,18 +46,13 @@ document.getElementById('greeting-name').textContent = getUserProfile().name || 
 const feedList = document.getElementById('feed-list');
 const feedEmpty = document.getElementById('feed-empty');
 
-const CHILLAR_PRESETS = [
-  { label: '+₹5 Xerox', amount: 5, category: 'Photostat' },
-  { label: '+₹10 Chai', amount: 10, category: 'Outside Food' },
-  { label: '+₹20 Auto', amount: 20, category: 'Travel' },
-  { label: '+₹15 Printout', amount: 15, category: 'Photostat' },
-  { label: '+₹30 Mess Extra', amount: 30, category: 'Mess' },
-];
+/* ---------------- Chillar — editable one-tap quick-add presets ---------------- */
 
 function renderChillarRow() {
+  const presets = getChillarPresets();
   const row = document.getElementById('chillar-row');
   row.innerHTML = '';
-  CHILLAR_PRESETS.forEach((preset) => {
+  presets.forEach((preset) => {
     const btn = document.createElement('button');
     btn.className = 'chillar-btn';
     btn.textContent = preset.label;
@@ -70,6 +71,105 @@ function renderChillarRow() {
     row.appendChild(btn);
   });
 }
+
+const chillarSheet = document.getElementById('chillar-sheet');
+const chillarCategorySelect = document.getElementById('chillar-new-category');
+CATEGORIES.forEach((cat) => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  chillarCategorySelect.appendChild(opt);
+});
+
+let editingChillarIndex = null;
+
+function renderChillarEditList() {
+  const presets = getChillarPresets();
+  const list = document.getElementById('chillar-list');
+  if (presets.length === 0) {
+    list.innerHTML = '<p class="text-[12px] font-bold text-sage text-center py-4">No presets yet — add one below.</p>';
+    return;
+  }
+  list.innerHTML = presets
+    .map(
+      (p, i) => `
+      <div class="flex items-center justify-between bg-sage/10 rounded-2xl px-4 py-3 ${editingChillarIndex === i ? 'border border-crimson/40' : ''}">
+        <div class="min-w-0">
+          <p class="text-[13px] font-black truncate">${p.label}</p>
+          <p class="text-[11px] font-bold text-sage">₹${p.amount} · ${p.category}</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button data-edit-chillar="${i}" class="w-8 h-8 rounded-full bg-sage/20 text-ink flex items-center justify-center">${icon('edit', 13)}</button>
+          <button data-remove-chillar="${i}" class="w-8 h-8 rounded-full bg-crimson/10 text-crimson flex items-center justify-center">${icon('trash', 14)}</button>
+        </div>
+      </div>`
+    )
+    .join('');
+  list.querySelectorAll('[data-remove-chillar]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmDialog('Remove this quick-add preset?', { okLabel: 'Remove' }))) return;
+      const presetsNow = getChillarPresets();
+      presetsNow.splice(Number(btn.dataset.removeChillar), 1);
+      setChillarPresets(presetsNow);
+      if (editingChillarIndex === Number(btn.dataset.removeChillar)) resetChillarForm();
+      renderChillarEditList();
+      renderChillarRow();
+    });
+  });
+  list.querySelectorAll('[data-edit-chillar]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const i = Number(btn.dataset.editChillar);
+      const p = getChillarPresets()[i];
+      editingChillarIndex = i;
+      document.getElementById('chillar-new-label').value = p.label.replace(/^\+₹\d+(\.\d+)?\s*/, '');
+      document.getElementById('chillar-new-amount').value = p.amount;
+      chillarCategorySelect.value = p.category;
+      document.getElementById('chillar-add-btn').textContent = 'Save Changes';
+      renderChillarEditList();
+    });
+  });
+}
+
+function resetChillarForm() {
+  editingChillarIndex = null;
+  document.getElementById('chillar-new-label').value = '';
+  document.getElementById('chillar-new-amount').value = '';
+  document.getElementById('chillar-add-btn').textContent = 'Add Preset';
+}
+
+document.getElementById('chillar-edit-btn').addEventListener('click', () => {
+  resetChillarForm();
+  renderChillarEditList();
+  chillarSheet.classList.remove('hidden');
+});
+document.getElementById('chillar-sheet-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'chillar-sheet-overlay') {
+    resetChillarForm();
+    chillarSheet.classList.add('hidden');
+  }
+});
+document.getElementById('chillar-sheet-done').addEventListener('click', () => {
+  resetChillarForm();
+  chillarSheet.classList.add('hidden');
+});
+
+document.getElementById('chillar-add-btn').addEventListener('click', () => {
+  const label = document.getElementById('chillar-new-label').value.trim();
+  const amount = parseFloat(document.getElementById('chillar-new-amount').value);
+  const category = chillarCategorySelect.value;
+  if (!label || !amount || amount <= 0) return;
+  const presets = getChillarPresets();
+  const newPreset = { label: `+₹${amount} ${label}`, amount, category };
+  if (editingChillarIndex !== null) {
+    presets[editingChillarIndex] = newPreset;
+  } else {
+    presets.push(newPreset);
+  }
+  setChillarPresets(presets);
+  resetChillarForm();
+  renderChillarEditList();
+  renderChillarRow();
+});
 
 
 async function renderCategoryBudgetAlerts() {
@@ -142,6 +242,15 @@ async function renderRecurringSuggestions() {
   });
 }
 
+async function renderKhataTeaser() {
+  const [{ owedToMe, iOwe }, entries] = await Promise.all([getLedgerTotals(), getLedgerEntries()]);
+  setMoneyText(document.getElementById('khata-teaser-owed'), formatINR(owedToMe));
+  setMoneyText(document.getElementById('khata-teaser-owe'), formatINR(iOwe));
+  const openCount = entries.filter((e) => !e.settled).length;
+  document.getElementById('khata-teaser-sub').textContent =
+    openCount > 0 ? `Money between you and friends · ${openCount} open` : 'Nothing pending — all settled up';
+}
+
 async function renderSummary() {
   const [available, vaultLocked, wallets, dailySafe] = await Promise.all([
     getAvailableToSpend(),
@@ -157,8 +266,13 @@ async function renderSummary() {
 
   const cash = wallets.find((w) => w.type === 'cash');
   const online = wallets.find((w) => w.type === 'online');
-  setMoneyText(document.getElementById('cash-balance'), formatINR(cash ? cash.balance : 0));
-  setMoneyText(document.getElementById('online-balance'), formatINR(online ? online.balance : 0));
+  const cashBal = cash ? cash.balance : 0;
+  const onlineBal = online ? online.balance : 0;
+  setMoneyText(document.getElementById('cash-balance'), formatINR(cashBal));
+  setMoneyText(document.getElementById('online-balance'), formatINR(onlineBal));
+  const walletTotal = cashBal + onlineBal;
+  const cashPct = walletTotal > 0 ? Math.round((cashBal / walletTotal) * 100) : 50;
+  document.getElementById('cash-online-fill').style.width = `${cashPct}%`;
 
   // Low balance alert
   const threshold = getLowBalanceThreshold();
@@ -166,6 +280,7 @@ async function renderSummary() {
 
   await renderCategoryBudgetAlerts();
   await renderRecurringSuggestions();
+  await renderKhataTeaser();
 
   const { income, expense } = await getMonthlyIncomeExpense();
   const alertEl = document.getElementById('alert-text');

@@ -2,10 +2,11 @@
    settings.js — Security, Budget, Recurring, Backup, Archive,
    Parent Export (settings.html)
    ============================================================ */
-import { renderNav } from './nav.js';
+import { renderNav, showToast } from './nav.js';
 import { isDarkMode, toggleTheme } from './theme.js';
 import { isGhostMode, toggleGhostMode } from './ghost.js';
 import { LOGO_MARK_BASE64 } from './pdf-logo.js';
+import { alertDialog, confirmDialog, promptDialog } from './dialog.js';
 import {
   hasPinSet,
   setupPin,
@@ -71,7 +72,7 @@ document.getElementById('profile-save-btn').addEventListener('click', () => {
   const name = document.getElementById('profile-name-input').value.trim();
   const dob = document.getElementById('profile-dob-input').value;
   setUserProfile({ name, dob });
-  alert('Saved!');
+  showToast('Saved!');
 });
 
 /* ---------------- Payment (UPI ID) ---------------- */
@@ -248,8 +249,8 @@ document.getElementById('setup-pin-btn').addEventListener('click', () => openPin
 document.getElementById('change-pin-btn').addEventListener('click', () => openPinModal('verifyOld'));
 document.getElementById('pin-modal-cancel').addEventListener('click', () => pinModal.classList.add('hidden'));
 
-document.getElementById('remove-pin-btn').addEventListener('click', () => {
-  if (confirm('Remove your PIN? The app will no longer be locked.')) {
+document.getElementById('remove-pin-btn').addEventListener('click', async () => {
+  if (await confirmDialog('The app will no longer be locked.', { title: 'Remove your PIN?', danger: true, okLabel: 'Remove' })) {
     removePin();
     refreshSecurityUI();
   }
@@ -330,7 +331,7 @@ document.getElementById('save-budget-btn').addEventListener('click', async () =>
   setLowBalanceThreshold(parseFloat(document.getElementById('low-balance-input').value) || 0);
   setOutsideFoodWeeklyLimit(parseFloat(document.getElementById('outside-food-input').value) || 0);
   await checkMessAlert();
-  alert('Saved!');
+  showToast('Saved!');
 });
 
 /* ---------------- Per-category budgets ---------------- */
@@ -434,7 +435,7 @@ async function renderRecurringList() {
   });
   list.querySelectorAll('[data-delete-recurring]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this recurring expense?')) {
+      if (await confirmDialog('Delete this recurring expense?', { danger: true, okLabel: 'Delete' })) {
         await deleteRecurring(Number(btn.dataset.deleteRecurring));
         await renderRecurringList();
       }
@@ -450,7 +451,7 @@ document.getElementById('add-recurring-btn').addEventListener('click', async () 
   const category = recurringCategorySelect.value;
 
   if (!title || !amount || amount <= 0) {
-    alert('Please enter a title and a valid amount.');
+    await alertDialog('Please enter a title and a valid amount.');
     return;
   }
 
@@ -480,22 +481,22 @@ document.getElementById('import-json-input').addEventListener('change', async (e
   const file = e.target.files[0];
   const statusEl = document.getElementById('backup-status');
   if (!file) return;
-  if (!confirm('Importing will replace ALL current data on this device. Continue?')) {
+  if (!(await confirmDialog('Importing will replace ALL current data on this device. Continue?', { title: 'Restore backup', danger: true, okLabel: 'Import' }))) {
     e.target.value = '';
     return;
   }
   statusEl.classList.add('hidden');
   try {
     await importBackupJSON(file);
-    alert('Backup restored! Reloading…');
+    await alertDialog('Backup restored! Reloading…');
     window.location.reload();
   } catch (err) {
     if (err.needsPassword) {
-      const password = prompt('This backup is password-protected. Enter the password to restore it:');
+      const password = await promptDialog('This backup is password-protected. Enter the password to restore it:', { title: 'Password needed', inputType: 'password', placeholder: 'Password' });
       if (password) {
         try {
           await importBackupJSON(file, password);
-          alert('Backup restored! Reloading…');
+          await alertDialog('Backup restored! Reloading…');
           window.location.reload();
           return;
         } catch (err2) {
@@ -559,7 +560,7 @@ document.getElementById('export-pdf-btn').addEventListener('click', async () => 
     await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => !!window.jspdf?.jsPDF);
     await loadOptionalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js', () => !!window.jspdf?.jsPDF?.API?.autoTable);
   } catch (error) {
-    alert(error.message);
+    await alertDialog(error.message, { title: 'Export failed' });
     return;
   }
   const { txs, totalIncome, totalExpense, byCategory } = await buildParentSummary();
@@ -684,7 +685,7 @@ document.getElementById('export-excel-btn').addEventListener('click', async () =
   try {
     await loadOptionalScript('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js', () => !!window.ExcelJS);
   } catch (error) {
-    alert(error.message);
+    await alertDialog(error.message, { title: 'Export failed' });
     return;
   }
   const { txs, totalIncome, totalExpense, byCategory } = await buildParentSummary();
@@ -803,7 +804,7 @@ async function renderArchiveList() {
   });
   list.querySelectorAll('[data-delete-archive]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this archive record? (This does not restore the transactions.)')) {
+      if (await confirmDialog('This does not restore the transactions.', { title: 'Delete this archive record?', danger: true, okLabel: 'Delete' })) {
         await deleteArchive(Number(btn.dataset.deleteArchive));
         await renderArchiveList();
       }
@@ -814,24 +815,23 @@ renderArchiveList();
 
 document.getElementById('create-archive-btn').addEventListener('click', async () => {
   const label = document.getElementById('archive-label').value.trim() || `Archive ${new Date().toLocaleDateString('en-IN')}`;
-  if (!confirm('This will snapshot and CLEAR your current transaction log. Wallet & Vault balances stay the same. Continue?')) return;
+  if (!(await confirmDialog('Wallet & Vault balances stay the same.', { title: 'Snapshot and clear this semester\'s log?', okLabel: 'Archive' }))) return;
   await archiveCurrentSemester(label);
   document.getElementById('archive-label').value = '';
   await renderArchiveList();
-  alert('Archived! Your transaction log has been reset for the new semester.');
+  showToast('Archived! Your transaction log has been reset for the new semester.');
 });
 
 /* ---------------- Danger Zone ---------------- */
 
 document.getElementById('wipe-data-btn').addEventListener('click', async () => {
-  if (!confirm('This will permanently erase ALL your data on this device. This cannot be undone. Continue?')) return;
-  if (!confirm('Are you absolutely sure? Type OK in the next box to confirm.')) return;
-  const typed = prompt('Type ERASE to confirm:');
+  if (!(await confirmDialog('This cannot be undone.', { title: 'Permanently erase ALL your data?', danger: true, okLabel: 'Continue' }))) return;
+  const typed = await promptDialog('Type ERASE to confirm:', { title: 'Are you absolutely sure?', placeholder: 'ERASE' });
   if (typed !== 'ERASE') {
-    alert('Cancelled — nothing was deleted.');
+    showToast('Cancelled — nothing was deleted.');
     return;
   }
   await wipeAllData();
-  alert('All data erased.');
+  await alertDialog('All data erased.');
   window.location.href = 'index.html';
 });

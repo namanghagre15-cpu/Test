@@ -5,6 +5,7 @@
    both are real, enforced gates (not decorative).
    ============================================================ */
 import { renderNav } from './nav.js';
+import { confirmDialog } from './dialog.js';
 import { initGhostToggle, setMoneyText } from './ghost.js';
 import { hasPinSet, verifyPin } from './lock.js';
 import {
@@ -84,7 +85,7 @@ async function renderAll() {
 
   goalsList.querySelectorAll('[data-delete-goal]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (confirm('Delete this goal? Any saved money should be withdrawn first.')) {
+      if (await confirmDialog('Any saved money should be withdrawn first.', { title: 'Delete this goal?', danger: true, okLabel: 'Delete' })) {
         await deleteVaultGoal(Number(btn.dataset.deleteGoal));
         await renderAll();
       }

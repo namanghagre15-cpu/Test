@@ -16,6 +16,7 @@ import {
   suggestCategoryByTime,
   recallWalletForCategory,
 } from './db.js';
+import { alertDialog, confirmDialog } from './dialog.js';
 
 renderNav('add');
 window.__mfAppRendered = true;
@@ -324,8 +325,8 @@ document.getElementById('clipboard-detect-btn').addEventListener('click', async 
       return;
     }
     const amount = parseFloat(match[1].replace(/,/g, ''));
-    if (window.confirm(`₹${amount} debit detected. Fill this amount?`)) {
-      amountStr = String(amount);
+    if (await confirmDialog(`₹${amount} debit detected. Fill this amount?`, { title: 'Clipboard match found' })) {
+      amountInput.value = String(amount);
       renderAmount();
     }
   } catch (err) {
@@ -437,10 +438,10 @@ document.getElementById('qr-manual-entry-btn').addEventListener('click', () => {
   showView(manualView);
 });
 
-document.getElementById('manual-upi-continue-btn').addEventListener('click', () => {
+document.getElementById('manual-upi-continue-btn').addEventListener('click', async () => {
   const upiId = document.getElementById('manual-upi-id').value.trim();
   if (!upiId || !upiId.includes('@')) {
-    alert('Please enter a valid UPI ID (e.g. name@bank).');
+    await alertDialog('Please enter a valid UPI ID (e.g. name@bank).');
     return;
   }
   decodedPayee = { pa: upiId, pn: upiId.split('@')[0], am: '' };
@@ -463,7 +464,7 @@ document.getElementById('qr-confirm-pay').addEventListener('click', async () => 
   const amountField = document.getElementById('qr-confirm-amount');
   const amount = parseFloat(amountField.value);
   if (!amount || amount <= 0) {
-    alert('Please enter a valid amount to pay.');
+    await alertDialog('Please enter a valid amount to pay.');
     return;
   }
   const finalAmount = Math.round(amount * 100) / 100;
