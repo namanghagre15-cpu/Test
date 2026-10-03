@@ -26,7 +26,7 @@
    onboarding page/script are now part of the app shell.
    ============================================================ */
 
-const CACHE_VERSION = 'v8-add-redesign';
+const CACHE_VERSION = 'v9-dialogs-chillar-home';
 const CACHE_NAME = `money-follow-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -66,6 +66,7 @@ const APP_SHELL = [
   './js/notifications.js',
   './js/crypto-backup.js',
   './js/pdf-logo.js',
+  './js/dialog.js',
   './js/ai-chat.js',
   './js/ai-tools.js',
   './icons/icon-192.png',

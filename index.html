@@ -123,11 +123,42 @@
         <div class="progress-track"><div class="progress-fill" id="budget-fill" style="width:0%"></div></div>
       </div>
 
+      <!-- Cash vs Online split -->
+      <div class="mb-4">
+        <div class="cash-online-track mb-2">
+          <div id="cash-online-fill" class="cash-online-fill" style="width:50%"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sage shrink-0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <div class="min-w-0">
+              <p class="text-[10px] uppercase tracking-widest font-bold text-sage leading-none">Cash</p>
+              <p class="text-[14px] font-black mf-amt leading-tight" id="cash-balance">₹0</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sage shrink-0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg></span>
+            <div class="min-w-0">
+              <p class="text-[10px] uppercase tracking-widest font-bold text-sage leading-none">Online</p>
+              <p class="text-[14px] font-black mf-amt leading-tight" id="online-balance">₹0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Alert box -->
-      <div class="rounded-2xl bg-sage/20 border border-sage-soft px-4 py-3 flex items-center gap-3">
+      <div class="rounded-2xl bg-sage/20 border border-sage-soft px-4 py-3 flex items-center gap-3 mb-4">
         <span class="text-crimson shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18"/></svg></span>
         <p class="text-[13px] font-bold text-ink leading-snug" id="alert-text">You're tracking well this week. Keep it up!</p>
       </div>
+
+      <!-- Primary CTA: always visible, no hunting for the + button -->
+      <a href="add.html" class="hero-add-btn">
+        <span class="hero-add-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>Add Expense</span>
+        <span class="hero-add-sub">Cash or online</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.5 7 6.5-7 6.5"/></svg>
+      </a>
     </div>
   </section>
 
@@ -146,17 +177,26 @@
     </div>
   </section>
 
-  <!-- Cash vs Online mini row -->
-  <section class="grid grid-cols-2 gap-3 mb-6">
-    <div class="bg-card rounded-3xl border border-sage-soft p-4">
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Cash</p>
-      <p class="text-[18px] font-black mf-amt" id="cash-balance">₹0</p>
+  <!-- Khata summary teaser -->
+  <a href="khata.html" class="khata-teaser mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <p class="text-[15px] font-black leading-tight">Khata</p>
+        <p class="text-[11px] font-bold text-ink-soft" id="khata-teaser-sub">Money between you and friends</p>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.5 7 6.5-7 6.5"/></svg>
     </div>
-    <div class="bg-card rounded-3xl border border-sage-soft p-4">
-      <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-1">Online</p>
-      <p class="text-[18px] font-black mf-amt" id="online-balance">₹0</p>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="khata-teaser-stat">
+        <p class="text-[10px] uppercase tracking-widest font-bold text-ink-soft mb-0.5">They owe you</p>
+        <p class="text-[18px] font-black mf-amt" id="khata-teaser-owed">₹0</p>
+      </div>
+      <div class="khata-teaser-stat">
+        <p class="text-[10px] uppercase tracking-widest font-bold text-ink-soft mb-0.5">You owe</p>
+        <p class="text-[18px] font-black mf-amt" id="khata-teaser-owe">₹0</p>
+      </div>
     </div>
-  </section>
+  </a>
 
   <!-- Quick Links -->
   <section class="grid grid-cols-4 gap-2 mb-6">
@@ -174,9 +214,36 @@
 
   <!-- Chillar quick-add -->
   <section class="mb-6">
-    <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Quick Add (Chillar)</p>
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-sage">Quick Add (Chillar)</p>
+      <button id="chillar-edit-btn" class="text-[11px] font-black text-crimson flex items-center gap-1" aria-label="Edit quick-add presets">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10.6-10.6a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>
+        Edit
+      </button>
+    </div>
     <div class="snap-row scrollbar-hide" id="chillar-row"></div>
   </section>
+
+  <!-- Chillar presets editor sheet -->
+  <div id="chillar-sheet" class="hidden">
+    <div class="sheet-overlay" id="chillar-sheet-overlay">
+      <div class="sheet-panel">
+        <div class="w-12 h-1.5 bg-sage/40 rounded-full mx-auto mb-4"></div>
+        <p class="font-black text-[16px] mb-4 text-center">Quick-Add Presets</p>
+        <div id="chillar-list" class="space-y-2 mb-4"></div>
+        <div class="bg-card rounded-2xl border border-sage-soft p-4 mb-3">
+          <p class="text-[10px] uppercase tracking-widest font-bold text-sage mb-2">Add a preset</p>
+          <input id="chillar-new-label" type="text" placeholder="Label, e.g. Chai" class="w-full bg-sage/10 border border-sage-soft rounded-2xl px-4 py-2.5 text-[13px] font-semibold outline-none text-ink mb-2" />
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <input id="chillar-new-amount" type="number" min="1" placeholder="Amount ₹" class="bg-sage/10 border border-sage-soft rounded-2xl px-4 py-2.5 text-[13px] font-semibold outline-none text-ink" />
+            <select id="chillar-new-category" class="bg-sage/10 border border-sage-soft rounded-2xl px-4 py-2.5 text-[13px] font-semibold outline-none text-ink"></select>
+          </div>
+          <button id="chillar-add-btn" class="w-full py-3 rounded-2xl bg-charcoal text-white font-black text-[13px]">Add Preset</button>
+        </div>
+        <button id="chillar-sheet-done" class="w-full py-3 rounded-2xl border border-sage-soft font-black text-[13px]">Done</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Secondary Feed -->
   <section>
