@@ -101,16 +101,23 @@ function renderList() {
       ? `<span class="text-[9px] uppercase tracking-widest font-black text-crimson bg-crimson/10 px-2 py-0.5 rounded-full ml-2">Pending</span>`
       : '';
 
+    const title = t.note ? t.note : t.category;
+    const subtitle = t.note ? `${t.category} · ${formatDate(t.date)}` : formatDate(t.date);
+    const walletLabel = t.walletType === 'cash' ? 'Cash' : 'Online';
+
     const item = document.createElement('div');
     item.className = 'bg-card rounded-3xl border border-sage-soft p-3';
     item.innerHTML = `
       <div class="flex items-center gap-3">
         <div class="feed-icon bg-crimson/10">${categoryIcon(t.category)}</div>
         <div class="flex-1 min-w-0">
-          <p class="text-[15px] font-black leading-tight truncate">${t.category}${pendingBadge}</p>
-          <p class="text-[11px] font-bold text-sage truncate">${formatDate(t.date)} · ${t.walletType === 'cash' ? 'Cash' : 'Online'}${t.note ? ' · ' + t.note : ''}</p>
+          <p class="text-[15px] font-black leading-tight truncate">${title}${pendingBadge}</p>
+          <p class="text-[11px] font-bold text-sage truncate">${subtitle}</p>
         </div>
-        <p class="text-[15px] font-black ${amountColor} shrink-0 mf-amt">${sign} ${formatINR(t.amount)}</p>
+        <div class="text-right shrink-0">
+          <p class="text-[15px] font-black ${amountColor} mf-amt">${sign} ${formatINR(t.amount)}</p>
+          ${!isTransfer ? `<span class="feed-wallet-tag">${walletLabel}</span>` : ''}
+        </div>
       </div>
       ${
         t.type !== 'transfer'

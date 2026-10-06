@@ -42,6 +42,14 @@ window.__mfAppRendered = true;
 initGhostToggle();
 
 document.getElementById('greeting-name').textContent = getUserProfile().name || 'there';
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-IN', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+});
+const nowHour = new Date().getHours();
+document.getElementById('greeting-word').textContent =
+  nowHour < 12 ? 'Good morning' : nowHour < 17 ? 'Good afternoon' : 'Good evening';
 
 const feedList = document.getElementById('feed-list');
 const feedEmpty = document.getElementById('feed-empty');
@@ -52,10 +60,10 @@ function renderChillarRow() {
   const presets = getChillarPresets();
   const row = document.getElementById('chillar-row');
   row.innerHTML = '';
-  presets.forEach((preset) => {
+  presets.forEach((preset, i) => {
     const btn = document.createElement('button');
     btn.className = 'chillar-btn';
-    btn.textContent = preset.label;
+    btn.innerHTML = `<span class="chillar-ico chillar-tint-${i % 5}">${categoryIcon(preset.category, 15)}</span><span>${preset.label}</span>`;
     btn.addEventListener('click', async () => {
       await addExpense({
         amount: preset.amount,
@@ -242,13 +250,38 @@ async function renderRecurringSuggestions() {
   });
 }
 
+function initials(name) {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+}
+
 async function renderKhataTeaser() {
   const [{ owedToMe, iOwe }, entries] = await Promise.all([getLedgerTotals(), getLedgerEntries()]);
   setMoneyText(document.getElementById('khata-teaser-owed'), formatINR(owedToMe));
   setMoneyText(document.getElementById('khata-teaser-owe'), formatINR(iOwe));
-  const openCount = entries.filter((e) => !e.settled).length;
+  const open = entries.filter((e) => !e.settled);
   document.getElementById('khata-teaser-sub').textContent =
-    openCount > 0 ? `Money between you and friends · ${openCount} open` : 'Nothing pending — all settled up';
+    open.length > 0 ? `Money between you and friends · ${open.length} open` : 'Nothing pending — all settled up';
+
+  const entriesEl = document.getElementById('khata-teaser-entries');
+  entriesEl.innerHTML = open
+    .slice(0, 2)
+    .map((e) => {
+      const theyOweMe = e.direction === 'owe_me';
+      return `
+      <div class="khata-entry-row">
+        <span class="khata-avatar">${initials(e.personName)}</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-[13px] font-black truncate">${e.personName}</p>
+          ${e.note ? `<p class="text-[11px] font-bold text-ink-soft truncate">${e.note}</p>` : ''}
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-[13px] font-black ${theyOweMe ? 'text-crimson' : 'text-ink'}">${formatINR(e.amount)}</p>
+          <p class="text-[10px] font-bold text-ink-soft">${theyOweMe ? 'owes you' : 'you owe'}</p>
+        </div>
+      </div>`;
+    })
+    .join('');
 }
 
 async function renderSummary() {
@@ -276,7 +309,9 @@ async function renderSummary() {
 
   // Low balance alert
   const threshold = getLowBalanceThreshold();
-  document.getElementById('low-balance-alert').classList.toggle('hidden', available >= threshold);
+  const lowBalanceActive = available < threshold;
+  document.getElementById('low-balance-alert').classList.toggle('hidden', !lowBalanceActive);
+  document.getElementById('notif-badge').classList.toggle('hidden', !lowBalanceActive);
 
   await renderCategoryBudgetAlerts();
   await renderRecurringSuggestions();
@@ -299,12 +334,21 @@ async function renderSummary() {
   if (budget > 0) {
     budgetBlock.classList.remove('hidden');
     const pct = Math.min(100, Math.round((expense / budget) * 100));
+    const monthName = new Date().toLocaleDateString('en-IN', { month: 'long' });
+    document.getElementById('budget-month-label').textContent = `${monthName} budget`;
     document.getElementById('budget-label').textContent = `${formatINR(expense)} / ${formatINR(budget)}`;
     document.getElementById('budget-fill').style.width = pct + '%';
-    document.getElementById('budget-fill').style.background = pct >= 100 ? '#ca0013' : '#171e19';
+    document.getElementById('budget-fill').style.background = pct >= 100 ? '#ca0013' : '#ffffff';
   } else {
     budgetBlock.classList.add('hidden');
   }
+
+  // Days left in the month (hero pill)
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysLeft = lastDay - now.getDate();
+  document.getElementById('days-left-pill').textContent =
+    daysLeft <= 0 ? 'Last day' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
 }
 
 async function renderHealthAndStreak() {
@@ -346,15 +390,22 @@ async function renderFeed() {
       ? `<span class="text-[9px] uppercase tracking-widest font-black text-crimson bg-crimson/10 px-2 py-0.5 rounded-full ml-2">Pending</span>`
       : '';
 
+    const title = t.note ? t.note : t.category;
+    const subtitle = t.note ? `${t.category} · ${formatDate(t.date)}` : formatDate(t.date);
+    const walletLabel = t.walletType === 'cash' ? 'Cash' : 'Online';
+
     const item = document.createElement('div');
     item.className = 'bg-card rounded-3xl border border-sage-soft p-3 flex items-center gap-3';
     item.innerHTML = `
       <div class="feed-icon bg-crimson/10">${categoryIcon(t.category)}</div>
       <div class="flex-1 min-w-0">
-        <p class="text-[16px] font-black leading-tight truncate">${t.category}${pendingBadge}</p>
-        <p class="text-[12px] font-bold text-sage">${formatDate(t.date)} · ${t.walletType === 'cash' ? 'Cash' : 'Online'}</p>
+        <p class="text-[16px] font-black leading-tight truncate">${title}${pendingBadge}</p>
+        <p class="text-[12px] font-bold text-sage truncate">${subtitle}</p>
       </div>
-      <p class="text-[15px] font-black ${amountColor} shrink-0 mf-amt">${sign} ${formatINR(t.amount)}</p>
+      <div class="text-right shrink-0">
+        <p class="text-[15px] font-black ${amountColor} mf-amt">${sign} ${formatINR(t.amount)}</p>
+        ${!isTransfer ? `<span class="feed-wallet-tag">${walletLabel}</span>` : ''}
+      </div>
     `;
     feedList.appendChild(item);
     setMoneyText(item.querySelector('.mf-amt'), `${sign} ${formatINR(t.amount)}`);
