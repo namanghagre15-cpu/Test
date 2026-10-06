@@ -26,7 +26,7 @@
    onboarding page/script are now part of the app shell.
    ============================================================ */
 
-const CACHE_VERSION = 'v9-dialogs-chillar-home';
+const CACHE_VERSION = 'v11-home-reference';
 const CACHE_NAME = `money-follow-${CACHE_VERSION}`;
 
 const APP_SHELL = [
