@@ -293,18 +293,30 @@ body {
   text-align: center;
 }
 
-/* ---------- Chillar quick-add buttons ---------- */
+/* ---------- Chillar quick-add buttons (reference "one-tap add" pills) ---------- */
 .chillar-btn {
   flex: 0 0 auto;
-  padding: 0.6rem 0.9rem;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0.45rem 0.9rem 0.45rem 0.45rem;
   border-radius: 9999px;
   background: var(--color-card);
   border: 1px solid rgba(183, 198, 194, 0.35);
   font-weight: 800;
-  font-size: 12.5px;
+  font-size: 13px;
   white-space: nowrap;
+  transition: transform 0.08s ease, background 0.15s ease;
 }
-.chillar-btn:active { background: rgba(202, 0, 19, 0.1); }
+.chillar-btn:active { transform: scale(0.96); background: rgba(202, 0, 19, 0.08); }
+.chillar-ico {
+  width: 30px; height: 30px; border-radius: 9999px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #ca0013;
+}
+.chillar-tint-0 { background: rgba(202, 0, 19, 0.12); }
+.chillar-tint-1 { background: rgba(150, 180, 192, 0.3); }
+.chillar-tint-2 { background: rgba(170, 150, 220, 0.22); }
+.chillar-tint-3 { background: rgba(230, 170, 90, 0.22); }
+.chillar-tint-4 { background: rgba(120, 180, 140, 0.22); }
 
 /* ---------- Toast ---------- */
 .mf-toast {
@@ -918,3 +930,29 @@ body { min-height: 100vh; overflow-x: hidden; }
   background: rgba(255, 255, 255, 0.4); border-radius: 1rem; padding: 10px 12px;
 }
 [data-theme='dark'] .khata-teaser-stat { background: rgba(0, 0, 0, 0.15); }
+.khata-entry-row {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.35); border-radius: 1rem; padding: 10px 12px;
+}
+[data-theme='dark'] .khata-entry-row { background: rgba(0, 0, 0, 0.12); }
+.feed-wallet-tag {
+  display: inline-block; margin-top: 3px; padding: 2px 9px; border-radius: 9999px;
+  background: rgba(183, 198, 194, 0.3); color: var(--color-ink-soft);
+  font-size: 10px; font-weight: 800;
+}
+.khata-avatar {
+  width: 34px; height: 34px; border-radius: 9999px; flex-shrink: 0;
+  background: #171e19; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900;
+}
+
+/* ---------- Hero card (reference-inspired dark style) ---------- */
+.hero-dark { background: #171e19; }
+[data-theme='dark'] .hero-dark { background: #0d110e; }
+.hero-pill {
+  display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.14); color: #fff;
+  font-size: 10px; font-weight: 800; white-space: nowrap;
+}
+.progress-track-dark { background: rgba(255, 255, 255, 0.16); }
